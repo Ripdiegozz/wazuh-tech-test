@@ -1,0 +1,374 @@
+Enabling OpenSearch Security Plugin
+Enabling execution of install_demo_configuration.sh for OpenSearch Security Plugin 
+OpenSearch 2.12.0 onwards, the OpenSearch Security Plugin a change that requires an initial password for 'admin' user. 
+Please define an environment variable 'OPENSEARCH_INITIAL_ADMIN_PASSWORD' with a strong password string. 
+If a password is not provided, the setup will quit. 
+ For more details, please visit: https://opensearch.org/docs/latest/install-and-configure/install-opensearch/docker/
+### OpenSearch Security Demo Installer
+### ** Warning: Do not use on production or public reachable systems **
+OpenSearch install type: rpm/deb on Linux 6.6.87.2-microsoft-standard-WSL2 amd64
+OpenSearch config dir: /usr/share/opensearch/config/
+OpenSearch config file: /usr/share/opensearch/config/opensearch.yml
+OpenSearch bin dir: /usr/share/opensearch/bin/
+OpenSearch plugins dir: /usr/share/opensearch/plugins/
+OpenSearch lib dir: /usr/share/opensearch/lib/
+Detected OpenSearch Version: 2.16.0
+Detected OpenSearch Security Version: 2.16.0.0
+Admin password set successfully.
+### Success
+### Execute this script now on all your nodes and then start all nodes
+### OpenSearch Security will be automatically initialized.
+### If you like to change the runtime configuration 
+### change the files in ../../../config/opensearch-security and execute: 
+sudo "/usr/share/opensearch/plugins/opensearch-security/tools/securityadmin.sh" -cd "/usr/share/opensearch/config/opensearch-security" -icl -key "/usr/share/opensearch/config/kirk-key.pem" -cert "/usr/share/opensearch/config/kirk.pem" -cacert "/usr/share/opensearch/config/root-ca.pem" -nhnv
+### or run ./securityadmin_demo.sh
+### To use the Security Plugin ConfigurationGUI
+### To access your secured cluster open https://<hostname>:<HTTP port> and log in with admin/<your-custom-admin-password>.
+### (Ignore the SSL certificate warning because we installed self-signed demo certificates)
+�Enabling execution of OPENSEARCH_HOME/bin/opensearch-performance-analyzer/performance-analyzer-agent-cli for OpenSearch Performance Analyzer Plugin
+WARNING: Using incubator modules: jdk.incubator.vector
+WARNING: A terminally deprecated method in java.lang.System has been called
+�WARNING: System::setSecurityManager has been called by org.opensearch.bootstrap.OpenSearch (file:/usr/share/opensearch/lib/opensearch-2.16.0.jar)
+WARNING: Please consider reporting this to the maintainers of org.opensearch.bootstrap.OpenSearch
+WARNING: System::setSecurityManager will be removed in a future release
+Nov 24, 2025 5:12:06 PM sun.util.locale.provider.LocaleProviderAdapter <clinit>
+WARNING: COMPAT locale provider will be removed in a future release
+WARNING: A terminally deprecated method in java.lang.System has been called
+�WARNING: System::setSecurityManager has been called by org.opensearch.bootstrap.Security (file:/usr/share/opensearch/lib/opensearch-2.16.0.jar)
+WARNING: Please consider reporting this to the maintainers of org.opensearch.bootstrap.Security
+WARNING: System::setSecurityManager will be removed in a future release
+[2025-11-24T17:12:07,093][INFO ][o.o.n.Node               ] [os1] version[2.16.0], pid[1], build[tar/f84a26e76807ea67a69822c37b1a1d89e7177d9b/2024-08-06T20:30:45.209655408Z], OS[Linux/6.6.87.2-microsoft-standard-WSL2/amd64], JVM[Eclipse Adoptium/OpenJDK 64-Bit Server VM/21.0.3/21.0.3+9-LTS]
+�[2025-11-24T17:12:07,095][INFO ][o.o.n.Node               ] [os1] JVM home [/usr/share/opensearch/jdk], using bundled JDK/JRE [true]
+[2025-11-24T17:12:07,095][INFO ][o.o.n.Node               ] [os1] JVM arguments [-Xshare:auto, -Dopensearch.networkaddress.cache.ttl=60, -Dopensearch.networkaddress.cache.negative.ttl=10, -XX:+AlwaysPreTouch, -Xss1m, -Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djna.nosys=true, -XX:-OmitStackTraceInFastThrow, -XX:+ShowCodeDetailsInExceptionMessages, -Dio.netty.noUnsafe=true, -Dio.netty.noKeySetOptimization=true, -Dio.netty.recycler.maxCapacityPerThread=0, -Dio.netty.allocator.numDirectArenas=0, -Dlog4j.shutdownHookEnabled=false, -Dlog4j2.disable.jmx=true, -Djava.security.manager=allow, -Djava.locale.providers=SPI,COMPAT, -Xms1g, -Xmx1g, -XX:+UseG1GC, -XX:G1ReservePercent=25, -XX:InitiatingHeapOccupancyPercent=30, -Djava.io.tmpdir=/tmp/opensearch-10714310828602891839, -XX:+HeapDumpOnOutOfMemoryError, -XX:HeapDumpPath=data, -XX:ErrorFile=logs/hs_err_pid%p.log, -Xlog:gc*,gc+age=trace,safepoint:file=logs/gc.log:utctime,pid,tags:filecount=32,filesize=64m, -Djava.security.manager=allow, --add-modules=jdk.incubator.vector, -Djava.util.concurrent.ForkJoinPool.common.threadFactory=org.opensearch.secure_sm.SecuredForkJoinWorkerThreadFactory, -Dclk.tck=100, -Djdk.attach.allowAttachSelf=true, -Djava.security.policy=/usr/share/opensearch/config/opensearch-performance-analyzer/opensearch_security.policy, --add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED, -Dopensearch.cgroups.hierarchy.override=/, -Xms512m, -Xmx512m, -XX:MaxDirectMemorySize=268435456, -Dopensearch.path.home=/usr/share/opensearch, -Dopensearch.path.conf=/usr/share/opensearch/config, -Dopensearch.distribution.type=tar, -Dopensearch.bundled_jdk=true]
+�[2025-11-24T17:12:07,299][INFO ][o.a.l.i.v.PanamaVectorizationProvider] [os1] Java vector incubator API enabled; uses preferredBitSize=256; FMA enabled
+[2025-11-24T17:12:08,162][INFO ][o.o.s.s.t.SSLConfig      ] [os1] SSL dual mode is disabled
+[2025-11-24T17:12:08,162][INFO ][o.o.s.OpenSearchSecurityPlugin] [os1] OpenSearch Config path is /usr/share/opensearch/config
+[2025-11-24T17:12:08,324][INFO ][o.o.s.s.DefaultSecurityKeyStore] [os1] JVM supports TLSv1.3
+�[2025-11-24T17:12:08,325][INFO ][o.o.s.s.DefaultSecurityKeyStore] [os1] Config directory is /usr/share/opensearch/config/, from there the key- and truststore files are resolved relatively
+[2025-11-24T17:12:08,736][INFO ][o.o.s.s.DefaultSecurityKeyStore] [os1] TLS Transport Client Provider : JDK
+[2025-11-24T17:12:08,736][INFO ][o.o.s.s.DefaultSecurityKeyStore] [os1] TLS Transport Server Provider : JDK
+[2025-11-24T17:12:08,736][INFO ][o.o.s.s.DefaultSecurityKeyStore] [os1] TLS HTTP Provider             : JDK
+�[2025-11-24T17:12:08,736][INFO ][o.o.s.s.DefaultSecurityKeyStore] [os1] Enabled TLS protocols for transport layer : [TLSv1.3, TLSv1.2]
+�[2025-11-24T17:12:08,736][INFO ][o.o.s.s.DefaultSecurityKeyStore] [os1] Enabled TLS protocols for HTTP layer      : [TLSv1.3, TLSv1.2]
+[2025-11-24T17:12:08,768][INFO ][o.o.s.OpenSearchSecurityPlugin] [os1] Clustername: os-dev-cluster
+�[2025-11-24T17:12:08,772][WARN ][o.o.s.OpenSearchSecurityPlugin] [os1] Directory /usr/share/opensearch/config has insecure file permissions (should be 0700)
+�[2025-11-24T17:12:08,773][WARN ][o.o.s.OpenSearchSecurityPlugin] [os1] File /usr/share/opensearch/config/esnode-key.pem has insecure file permissions (should be 0600)
+�[2025-11-24T17:12:08,773][WARN ][o.o.s.OpenSearchSecurityPlugin] [os1] File /usr/share/opensearch/config/esnode.pem has insecure file permissions (should be 0600)
+�[2025-11-24T17:12:08,773][WARN ][o.o.s.OpenSearchSecurityPlugin] [os1] File /usr/share/opensearch/config/securityadmin_demo.sh has insecure file permissions (should be 0600)
+�[2025-11-24T17:12:08,773][WARN ][o.o.s.OpenSearchSecurityPlugin] [os1] File /usr/share/opensearch/config/root-ca.pem has insecure file permissions (should be 0600)
+�[2025-11-24T17:12:08,773][WARN ][o.o.s.OpenSearchSecurityPlugin] [os1] File /usr/share/opensearch/config/kirk-key.pem has insecure file permissions (should be 0600)
+�[2025-11-24T17:12:08,773][WARN ][o.o.s.OpenSearchSecurityPlugin] [os1] File /usr/share/opensearch/config/kirk.pem has insecure file permissions (should be 0600)
+[2025-11-24T17:12:09,560][INFO ][o.o.p.c.c.PluginSettings ] [os1] Config: metricsLocation: /dev/shm/performanceanalyzer/, metricsDeletionInterval: 1, httpsEnabled: false, cleanup-metrics-db-files: true, batch-metrics-retention-period-minutes: 7, rpc-port: 9650, webservice-port 9600
+[2025-11-24T17:12:10,166][INFO ][o.o.i.r.ReindexPlugin    ] [os1] ReindexPlugin reloadSPI called
+[2025-11-24T17:12:10,167][INFO ][o.o.i.r.ReindexPlugin    ] [os1] Unable to find any implementation for RemoteReindexExtension
+�[2025-11-24T17:12:10,228][INFO ][o.o.j.JobSchedulerPlugin ] [os1] Loaded scheduler extension: reports-scheduler, index: .opendistro-reports-definitions
+�[2025-11-24T17:12:10,229][INFO ][o.o.j.JobSchedulerPlugin ] [os1] Loaded scheduler extension: opensearch_time_series_analytics, index: .opendistro-anomaly-detector-jobs
+�[2025-11-24T17:12:10,230][INFO ][o.o.j.JobSchedulerPlugin ] [os1] Loaded scheduler extension: opendistro-index-management, index: .opendistro-ism-config
+�[2025-11-24T17:12:10,231][INFO ][o.o.j.JobSchedulerPlugin ] [os1] Loaded scheduler extension: scheduler_geospatial_ip2geo_datasource, index: .scheduler-geospatial-ip2geo-datasource
+�[2025-11-24T17:12:10,232][INFO ][o.o.j.JobSchedulerPlugin ] [os1] Loaded scheduler extension: opensearch_sap_job, index: .opensearch-sap--job
+[2025-11-24T17:12:10,254][INFO ][o.o.p.PluginsService     ] [os1] loaded module [aggs-matrix-stats]
+[2025-11-24T17:12:10,254][INFO ][o.o.p.PluginsService     ] [os1] loaded module [analysis-common]
+[2025-11-24T17:12:10,254][INFO ][o.o.p.PluginsService     ] [os1] loaded module [cache-common]
+[2025-11-24T17:12:10,254][INFO ][o.o.p.PluginsService     ] [os1] loaded module [geo]
+[2025-11-24T17:12:10,254][INFO ][o.o.p.PluginsService     ] [os1] loaded module [ingest-common]
+[2025-11-24T17:12:10,254][INFO ][o.o.p.PluginsService     ] [os1] loaded module [ingest-geoip]
+[2025-11-24T17:12:10,254][INFO ][o.o.p.PluginsService     ] [os1] loaded module [ingest-user-agent]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [lang-expression]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [lang-mustache]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [lang-painless]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [mapper-extras]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [opensearch-dashboards]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [parent-join]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [percolator]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [rank-eval]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [reindex]
+[2025-11-24T17:12:10,255][INFO ][o.o.p.PluginsService     ] [os1] loaded module [repository-url]
+[2025-11-24T17:12:10,256][INFO ][o.o.p.PluginsService     ] [os1] loaded module [search-pipeline-common]
+[2025-11-24T17:12:10,256][INFO ][o.o.p.PluginsService     ] [os1] loaded module [systemd]
+[2025-11-24T17:12:10,256][INFO ][o.o.p.PluginsService     ] [os1] loaded module [transport-netty4]
+[2025-11-24T17:12:10,256][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-alerting]
+[2025-11-24T17:12:10,256][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-anomaly-detection]
+[2025-11-24T17:12:10,256][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-asynchronous-search]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-cross-cluster-replication]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-custom-codecs]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-flow-framework]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-geospatial]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-index-management]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-job-scheduler]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-knn]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-ml]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-neural-search]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-notifications]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-notifications-core]
+[2025-11-24T17:12:10,257][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-observability]
+[2025-11-24T17:12:10,258][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-performance-analyzer]
+[2025-11-24T17:12:10,258][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-reports-scheduler]
+[2025-11-24T17:12:10,258][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-security]
+[2025-11-24T17:12:10,258][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-security-analytics]
+[2025-11-24T17:12:10,258][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-skills]
+[2025-11-24T17:12:10,258][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [opensearch-sql]
+[2025-11-24T17:12:10,258][INFO ][o.o.p.PluginsService     ] [os1] loaded plugin [query-insights]
+�[2025-11-24T17:12:10,323][INFO ][o.o.s.OpenSearchSecurityPlugin] [os1] Disabled https compression by default to mitigate BREACH attacks. You can enable it by setting 'http.compression: true' in opensearch.yml
+[2025-11-24T17:12:10,326][INFO ][o.o.e.ExtensionsManager  ] [os1] ExtensionsManager initialized
+�[2025-11-24T17:12:10,340][DEPRECATION][o.o.d.c.s.Settings       ] [os1] [node.max_local_storage_nodes] setting was deprecated in OpenSearch and will be removed in a future release! See the breaking changes documentation for the next major version.
+�[2025-11-24T17:12:10,353][WARN ][stderr                   ] [os1] WARNING: A restricted method in java.lang.foreign.Linker has been called
+�[2025-11-24T17:12:10,353][WARN ][stderr                   ] [os1] WARNING: java.lang.foreign.Linker::downcallHandle has been called by the unnamed module
+�[2025-11-24T17:12:10,353][WARN ][stderr                   ] [os1] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for this module
+�[2025-11-24T17:12:10,411][INFO ][o.a.l.s.MemorySegmentIndexInputProvider] [os1] Using MemorySegmentIndexInput and native madvise support with Java 21 or later; to disable start with -Dorg.apache.lucene.store.MMapDirectory.enableMemorySegments=false
+�[2025-11-24T17:12:10,418][INFO ][o.o.e.NodeEnvironment    ] [os1] using [1] data paths, mounts [[/ (overlay)]], net usable_space [947.6gb], net total_space [1006.8gb], types [overlay]
+�[2025-11-24T17:12:10,419][INFO ][o.o.e.NodeEnvironment    ] [os1] heap size [512mb], compressed ordinary object pointers [true]
+�[2025-11-24T17:12:10,454][INFO ][o.o.n.Node               ] [os1] node name [os1], node ID [QGXlG9sRSlmM54E-bcW8Xw], cluster name [os-dev-cluster], roles [ingest, remote_cluster_client, data, cluster_manager]
+�[2025-11-24T17:12:12,300][DEPRECATION][o.o.d.c.s.Settings       ] [os1] [index.store.hybrid.mmap.extensions] setting was deprecated in OpenSearch and will be removed in a future release! See the breaking changes documentation for the next major version.
+�[2025-11-24T17:12:12,301][DEPRECATION][o.o.d.c.s.Settings       ] [os1] [cluster.initial_master_nodes] setting was deprecated in OpenSearch and will be removed in a future release! See the breaking changes documentation for the next major version.
+[2025-11-24T17:12:12,301][DEPRECATION][o.o.d.c.s.Settings       ] [os1] [plugins.security.ssl.transport.enforce_hostname_verification] setting was deprecated in OpenSearch and will be removed in a future release! See the breaking changes documentation for the next major version.
+�[2025-11-24T17:12:12,848][INFO ][o.o.n.p.NeuralSearch     ] [os1] Registering hybrid query phase searcher with feature flag [plugins.neural_search.hybrid_search_disabled]
+�[2025-11-24T17:12:13,203][WARN ][o.o.s.c.Salt             ] [os1] If you plan to use field masking pls configure compliance salt e1ukloTsQlOgPquJ to be a random string of 16 chars length identical on all nodes
+[2025-11-24T17:12:13,253][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Message routing enabled: true
+[2025-11-24T17:12:13,286][INFO ][o.o.s.f.SecurityFilter   ] [os1] <NONE> indices are made immutable.
+[2025-11-24T17:12:13,563][INFO ][o.o.t.b.CircuitBreakerService] [os1] Registered memory breaker.
+[2025-11-24T17:12:13,984][INFO ][o.o.m.b.MLCircuitBreakerService] [os1] Registered ML memory breaker.
+[2025-11-24T17:12:13,984][INFO ][o.o.m.b.MLCircuitBreakerService] [os1] Registered ML disk breaker.
+[2025-11-24T17:12:13,984][INFO ][o.o.m.b.MLCircuitBreakerService] [os1] Registered ML native memory breaker.
+�[2025-11-24T17:12:14,090][INFO ][o.r.Reflections          ] [os1] Reflections took 45 ms to scan 1 urls, producing 26 keys and 67 values 
+�[2025-11-24T17:12:14,274][WARN ][o.o.s.p.SQLPlugin        ] [os1] Master key is a required config for using create and update datasource APIs. Please set plugins.query.datasources.encryption.masterkey config in opensearch.yml in all the cluster nodes. More details can be found here: https://github.com/opensearch-project/sql/blob/main/docs/user/ppl/admin/datasources.rst#master-key-config-for-encrypting-credential-information
+[2025-11-24T17:12:14,967][INFO ][o.o.t.NettyAllocator     ] [os1] creating NettyAllocator with the following configs: [name=unpooled, suggested_max_allocation_size=256kb, factors={opensearch.unsafe.use_unpooled_allocator=null, g1gc_enabled=true, g1gc_region_size=1mb, heap_size=512mb}]
+[2025-11-24T17:12:14,974][INFO ][o.o.s.s.t.SSLConfig      ] [os1] SSL dual mode is disabled
+�[2025-11-24T17:12:15,071][INFO ][o.o.d.DiscoveryModule    ] [os1] using discovery type [zen] and seed hosts providers [settings]
+�[2025-11-24T17:12:15,537][WARN ][o.o.g.DanglingIndicesState] [os1] gateway.auto_import_dangling_indices is disabled, dangling indices will not be automatically detected or imported and must be managed manually
+[2025-11-24T17:12:16,199][INFO ][o.o.p.h.c.PerformanceAnalyzerConfigAction] [os1] PerformanceAnalyzer Enabled: false
+[2025-11-24T17:12:16,242][INFO ][o.o.n.Node               ] [os1] initialized
+[2025-11-24T17:12:16,242][INFO ][o.o.n.Node               ] [os1] starting ...
+[2025-11-24T17:12:16,247][ERROR][o.o.s.l.BuiltinLogTypeLoader] [os1] Failed loading builtin log types from disk!
+java.nio.file.FileSystemNotFoundException: null
+        at jdk.zipfs@21.0.3/jdk.nio.zipfs.ZipFileSystemProvider.getFileSystem(ZipFileSystemProvider.java:156) ~[?:?]
+        at jdk.zipfs@21.0.3/jdk.nio.zipfs.ZipFileSystemProvider.getPath(ZipFileSystemProvider.java:142) ~[?:?]
+        at java.base/java.nio.file.Path.of(Path.java:209) ~[?:?]
+        at java.base/java.nio.file.Paths.get(Paths.java:98) ~[?:?]
+�       at org.opensearch.securityanalytics.logtype.BuiltinLogTypeLoader.loadBuiltinLogTypes(BuiltinLogTypeLoader.java:73) ~[opensearch-security-analytics-2.16.0.0.jar:2.16.0.0]
+�       at org.opensearch.securityanalytics.logtype.BuiltinLogTypeLoader.ensureLogTypesLoaded(BuiltinLogTypeLoader.java:62) [opensearch-security-analytics-2.16.0.0.jar:2.16.0.0]
+�       at org.opensearch.securityanalytics.logtype.BuiltinLogTypeLoader.doStart(BuiltinLogTypeLoader.java:146) [opensearch-security-analytics-2.16.0.0.jar:2.16.0.0]
+�       at org.opensearch.common.lifecycle.AbstractLifecycleComponent.start(AbstractLifecycleComponent.java:77) [opensearch-common-2.16.0.jar:2.16.0]
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596) [?:?]
+        at java.base/java.util.Collections$UnmodifiableCollection.forEach(Collections.java:1116) [?:?]
+        at org.opensearch.node.Node.start(Node.java:1505) [opensearch-2.16.0.jar:2.16.0]
+        at org.opensearch.bootstrap.Bootstrap.start(Bootstrap.java:339) [opensearch-2.16.0.jar:2.16.0]
+        at org.opensearch.bootstrap.Bootstrap.init(Bootstrap.java:413) [opensearch-2.16.0.jar:2.16.0]
+        at org.opensearch.bootstrap.OpenSearch.init(OpenSearch.java:181) [opensearch-2.16.0.jar:2.16.0]
+        at org.opensearch.bootstrap.OpenSearch.execute(OpenSearch.java:172) [opensearch-2.16.0.jar:2.16.0]
+        at org.opensearch.cli.EnvironmentAwareCommand.execute(EnvironmentAwareCommand.java:104) [opensearch-2.16.0.jar:2.16.0]
+        at org.opensearch.cli.Command.mainWithoutErrorHandling(Command.java:138) [opensearch-cli-2.16.0.jar:2.16.0]
+        at org.opensearch.cli.Command.main(Command.java:101) [opensearch-cli-2.16.0.jar:2.16.0]
+        at org.opensearch.bootstrap.OpenSearch.main(OpenSearch.java:138) [opensearch-2.16.0.jar:2.16.0]
+        at org.opensearch.bootstrap.OpenSearch.main(OpenSearch.java:104) [opensearch-2.16.0.jar:2.16.0]
+�[2025-11-24T17:12:16,353][INFO ][o.o.t.TransportService   ] [os1] publish_address {10.89.0.2:9300}, bound_addresses {[::]:9300}
+[2025-11-24T17:12:16,355][INFO ][o.o.t.TransportService   ] [os1] Remote clusters initialized successfully.
+�[2025-11-24T17:12:16,514][INFO ][o.o.b.BootstrapChecks    ] [os1] bound or publishing to a non-loopback address, enforcing bootstrap checks
+�[2025-11-24T17:12:16,526][INFO ][o.o.c.c.Coordinator      ] [os1] setting initial configuration to VotingConfiguration{QGXlG9sRSlmM54E-bcW8Xw}
+[2025-11-24T17:12:16,641][INFO ][o.o.c.s.MasterService    ] [os1] Tasks batched with key: org.opensearch.cluster.coordination.JoinHelper and count: 3, term: 1, version: 1, delta: cluster-manager node changed {previous [], current [{os1}{QGXlG9sRSlmM54E-bcW8Xw}{o9gPo4lnTPa05-jLrUFcLA}{10.89.0.2}{10.89.0.2:9300}{dimr}{shard_indexing_pressure_enabled=true}]}
+[2025-11-24T17:12:16,681][INFO ][o.o.c.c.CoordinationState] [os1] cluster UUID set to [2WlwbO1lSdKmztdS7l-yUQ]
+[2025-11-24T17:12:16,712][INFO ][o.o.c.s.ClusterApplierService] [os1] cluster-manager node changed {previous [], current [{os1}{QGXlG9sRSlmM54E-bcW8Xw}{o9gPo4lnTPa05-jLrUFcLA}{10.89.0.2}{10.89.0.2:9300}{dimr}{shard_indexing_pressure_enabled=true}]}, term: 1, version: 1, reason: Publication{term=1, version=1}
+[2025-11-24T17:12:16,718][INFO ][o.o.t.i.IndexManagement  ] [os1] Candidate custom result indices are empty.
+[2025-11-24T17:12:16,719][INFO ][o.o.t.i.IndexManagement  ] [os1] Candidate custom result indices are empty.
+[2025-11-24T17:12:16,719][INFO ][o.o.t.c.ClusterEventListener] [os1] Cluster is not recovered yet.
+�[2025-11-24T17:12:16,753][INFO ][o.o.i.i.ManagedIndexCoordinator] [os1] Cache cluster manager node onClusterManager time: 1764004336753
+�[2025-11-24T17:12:16,763][WARN ][o.o.p.c.s.h.ConfigOverridesClusterSettingHandler] [os1] Config override setting update called with empty string. Ignoring.
+[2025-11-24T17:12:16,769][INFO ][o.o.d.PeerFinder         ] [os1] setting findPeersInterval to [1s] as node commission status = [true] for local node [{os1}{QGXlG9sRSlmM54E-bcW8Xw}{o9gPo4lnTPa05-jLrUFcLA}{10.89.0.2}{10.89.0.2:9300}{dimr}{shard_indexing_pressure_enabled=true}]
+�[2025-11-24T17:12:16,772][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+�[2025-11-24T17:12:16,776][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+�[2025-11-24T17:12:16,780][INFO ][o.o.h.AbstractHttpServerTransport] [os1] publish_address {10.89.0.2:9200}, bound_addresses {[::]:9200}
+[2025-11-24T17:12:16,780][INFO ][o.o.n.Node               ] [os1] started
+�[2025-11-24T17:12:16,781][INFO ][o.o.s.c.ConfigurationRepository] [os1] Will attempt to create index .opendistro_security and default configs if they are absent
+�[2025-11-24T17:12:16,781][INFO ][o.o.s.c.ConfigurationRepository] [os1] Background init thread started. Install default config?: true
+[2025-11-24T17:12:16,782][INFO ][o.o.s.c.ConfigurationRepository] [os1] Wait for cluster to be available ...
+[2025-11-24T17:12:16,782][INFO ][o.o.s.OpenSearchSecurityPlugin] [os1] 0 OpenSearch Security modules loaded so far: []
+[2025-11-24T17:12:16,800][INFO ][o.o.t.c.HashRing         ] [os1] Node added: [QGXlG9sRSlmM54E-bcW8Xw]
+[2025-11-24T17:12:16,803][INFO ][o.o.t.c.HashRing         ] [os1] Add data node to version hash ring: QGXlG9sRSlmM54E-bcW8Xw
+�[2025-11-24T17:12:16,805][INFO ][o.o.t.c.HashRing         ] [os1] All nodes with known version: {QGXlG9sRSlmM54E-bcW8Xw=ADNodeInfo{version=2.16.0, isEligibleDataNode=true}}
+�[2025-11-24T17:12:16,805][INFO ][o.o.t.c.HashRing         ] [os1] Rebuild hash ring for realtime with cooldown, nodeChangeEvents size 0
+[2025-11-24T17:12:16,806][INFO ][o.o.t.c.HashRing         ] [os1] Build version hash ring successfully
+[2025-11-24T17:12:16,806][INFO ][o.o.t.c.ADDataMigrator   ] [os1] Start migrating AD data
+[2025-11-24T17:12:16,806][INFO ][o.o.t.c.ADDataMigrator   ] [os1] AD job index doesn't exist, no need to migrate
+[2025-11-24T17:12:16,807][INFO ][o.o.t.c.ClusterEventListener] [os1] Init version hash ring successfully
+[2025-11-24T17:12:16,825][INFO ][o.o.g.GatewayService     ] [os1] recovered [0] indices into cluster_state
+�[2025-11-24T17:12:16,855][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opensearch-observability/oiuRirqMR9m5SrKIEXenoQ]
+�[2025-11-24T17:12:16,972][INFO ][o.o.c.m.MetadataCreateIndexService] [os1] [.opensearch-observability] creating index, cause [api], templates [], shards [1]/[0]
+�[2025-11-24T17:12:16,977][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+�[2025-11-24T17:12:17,026][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opensearch-observability/oiuRirqMR9m5SrKIEXenoQ]
+�[2025-11-24T17:12:17,104][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opensearch-sap-log-types-config/oS2h1cd4QCy3Nyk9eeP-yQ]
+�[2025-11-24T17:12:17,115][INFO ][o.o.c.m.MetadataCreateIndexService] [os1] [.opensearch-sap-log-types-config] creating index, cause [auto(sap-logtype api)], templates [], shards [1]/[1]
+�[2025-11-24T17:12:17,117][INFO ][o.o.c.r.a.AllocationService] [os1] updating number_of_replicas to [0] for indices [.opensearch-sap-log-types-config]
+�[2025-11-24T17:12:17,117][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+�[2025-11-24T17:12:17,187][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opensearch-sap-log-types-config/oS2h1cd4QCy3Nyk9eeP-yQ]
+�[2025-11-24T17:12:17,330][INFO ][o.o.o.i.ObservabilityIndex] [os1] observability:Index .opensearch-observability creation Acknowledged
+�[2025-11-24T17:12:17,333][INFO ][o.o.c.r.a.AllocationService] [os1] Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[.opensearch-sap-log-types-config][0]]]).
+[2025-11-24T17:12:17,374][INFO ][o.o.s.l.LogTypeService   ] [os1] Loading builtin types!
+[2025-11-24T17:12:17,378][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [windows_logtype.json] log type
+[2025-11-24T17:12:17,378][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [waf_logtype.json] log type
+[2025-11-24T17:12:17,379][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [vpcflow_logtype.json] log type
+[2025-11-24T17:12:17,380][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [test_windows_logtype.json] log type
+[2025-11-24T17:12:17,380][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [s3_logtype.json] log type
+[2025-11-24T17:12:17,381][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [others_web_logtype.json] log type
+[2025-11-24T17:12:17,381][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [others_proxy_logtype.json] log type
+[2025-11-24T17:12:17,381][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [others_macos_logtype.json] log type
+[2025-11-24T17:12:17,382][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [others_compliance_logtype.json] log type
+[2025-11-24T17:12:17,382][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [others_cloud_logtype.json] log type
+[2025-11-24T17:12:17,383][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [others_apt_logtype.json] log type
+[2025-11-24T17:12:17,383][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [others_application_logtype.json] log type
+[2025-11-24T17:12:17,383][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [okta_logtype.json] log type
+[2025-11-24T17:12:17,384][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [network_logtype.json] log type
+[2025-11-24T17:12:17,384][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [netflow_logtype.json] log type
+[2025-11-24T17:12:17,384][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [m365_logtype.json] log type
+[2025-11-24T17:12:17,385][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [linux_logtype.json] log type
+[2025-11-24T17:12:17,386][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [gworkspace_logtype.json] log type
+[2025-11-24T17:12:17,386][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [github_logtype.json] log type
+[2025-11-24T17:12:17,387][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [dns_logtype.json] log type
+[2025-11-24T17:12:17,387][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [cloudtrail_logtype.json] log type
+[2025-11-24T17:12:17,388][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [azure_logtype.json] log type
+[2025-11-24T17:12:17,388][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [apache_access_logtype.json] log type
+[2025-11-24T17:12:17,389][INFO ][o.o.s.l.BuiltinLogTypeLoader] [os1] Loaded [ad_ldap_logtype.json] log type
+[2025-11-24T17:12:17,391][INFO ][o.o.s.l.LogTypeService   ] [os1] Indexing [429] fieldMappingDocs from logTypes: 24
+�[2025-11-24T17:12:17,426][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+[2025-11-24T17:12:17,470][INFO ][o.o.s.l.LogTypeService   ] [os1] Indexing [429] fieldMappingDocs
+�[2025-11-24T17:12:17,506][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opensearch-sap-log-types-config/oS2h1cd4QCy3Nyk9eeP-yQ]
+�[2025-11-24T17:12:17,512][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opensearch-sap-log-types-config/oS2h1cd4QCy3Nyk9eeP-yQ] update_mapping [_doc]
+�[2025-11-24T17:12:17,574][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opensearch-sap-log-types-config/oS2h1cd4QCy3Nyk9eeP-yQ]
+�[2025-11-24T17:12:17,580][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opensearch-sap-log-types-config/oS2h1cd4QCy3Nyk9eeP-yQ] update_mapping [_doc]
+[2025-11-24T17:12:17,766][INFO ][o.o.s.l.LogTypeService   ] [os1] Loading builtin types!
+[2025-11-24T17:12:17,767][INFO ][o.o.s.l.LogTypeService   ] [os1] Indexing [429] fieldMappingDocs from logTypes: 24
+[2025-11-24T17:12:17,769][INFO ][o.o.s.l.LogTypeService   ] [os1] Loading builtin types!
+[2025-11-24T17:12:17,770][INFO ][o.o.s.l.LogTypeService   ] [os1] Indexing [429] fieldMappingDocs from logTypes: 24
+[2025-11-24T17:12:17,772][INFO ][o.o.s.i.DetectorIndexManagementService] [os1] info deleteOldIndices
+[2025-11-24T17:12:17,774][INFO ][o.o.s.i.DetectorIndexManagementService] [os1] No Old Correlation Indices to delete
+[2025-11-24T17:12:17,775][INFO ][o.o.s.i.DetectorIndexManagementService] [os1] info deleteOldIndices
+[2025-11-24T17:12:17,776][INFO ][o.o.s.i.DetectorIndexManagementService] [os1] No Old IOC Findings Indices to delete
+[2025-11-24T17:12:17,778][INFO ][o.o.s.l.LogTypeService   ] [os1] Indexing [429] fieldMappingDocs
+[2025-11-24T17:12:17,779][INFO ][o.o.s.l.LogTypeService   ] [os1] Indexing [429] fieldMappingDocs
+�[2025-11-24T17:12:17,786][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:17,788][INFO ][o.o.c.m.MetadataCreateIndexService] [os1] [.opendistro_security] creating index, cause [api], templates [], shards [1]/[1]
+�[2025-11-24T17:12:17,788][INFO ][o.o.c.r.a.AllocationService] [os1] updating number_of_replicas to [0] for indices [.opendistro_security]
+�[2025-11-24T17:12:17,789][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+�[2025-11-24T17:12:17,833][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+[2025-11-24T17:12:17,860][INFO ][o.o.s.l.LogTypeService   ] [os1] Loaded [429] field mapping docs successfully!
+[2025-11-24T17:12:17,880][INFO ][o.o.s.l.LogTypeService   ] [os1] Indexing [23] customLogTypes
+�[2025-11-24T17:12:17,930][INFO ][o.o.c.r.a.AllocationService] [os1] Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[.opendistro_security][0]]]).
+[2025-11-24T17:12:17,969][INFO ][o.o.s.c.ConfigurationRepository] [os1] Index .opendistro_security created?: true
+�[2025-11-24T17:12:17,969][INFO ][o.o.s.c.ConfigurationRepository] [os1] Node started, try to initialize it. Wait for at least yellow cluster state....
+�[2025-11-24T17:12:17,970][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+�[2025-11-24T17:12:17,974][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'config' with /usr/share/opensearch/config/opensearch-security/config.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=false
+[2025-11-24T17:12:17,982][INFO ][o.o.s.l.LogTypeService   ] [os1] Loaded [429] field mapping docs successfully!
+[2025-11-24T17:12:17,989][INFO ][o.o.s.l.LogTypeService   ] [os1] Indexing [23] customLogTypes
+[2025-11-24T17:12:17,989][INFO ][o.o.s.l.LogTypeService   ] [os1] Loaded [23] customLogType docs successfully!
+[2025-11-24T17:12:17,989][INFO ][o.o.s.l.LogTypeService   ] [os1] Loaded [429] field mapping docs successfully!
+�[2025-11-24T17:12:17,990][INFO ][o.o.s.SecurityAnalyticsPlugin] [os1] LogType config index successfully created and builtin log types loaded
+[2025-11-24T17:12:17,993][INFO ][o.o.s.l.LogTypeService   ] [os1] Indexing [23] customLogTypes
+�[2025-11-24T17:12:18,013][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:18,034][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] create_mapping
+[2025-11-24T17:12:18,069][INFO ][o.o.s.l.LogTypeService   ] [os1] Loaded [23] customLogType docs successfully!
+[2025-11-24T17:12:18,075][INFO ][o.o.s.l.LogTypeService   ] [os1] Loaded [23] customLogType docs successfully!
+�[2025-11-24T17:12:18,147][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'config' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,148][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'roles' with /usr/share/opensearch/config/opensearch-security/roles.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=false
+�[2025-11-24T17:12:18,164][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+[2025-11-24T17:12:18,167][INFO ][o.o.s.i.DetectorIndexManagementService] [os1] info deleteOldIndices
+[2025-11-24T17:12:18,168][INFO ][o.o.s.i.DetectorIndexManagementService] [os1] No Old Alert Indices to delete
+�[2025-11-24T17:12:18,169][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] update_mapping [_doc]
+�[2025-11-24T17:12:18,308][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'roles' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,308][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'rolesmapping' with /usr/share/opensearch/config/opensearch-security/roles_mapping.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=false
+�[2025-11-24T17:12:18,316][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:18,321][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] update_mapping [_doc]
+[2025-11-24T17:12:18,321][ERROR][o.o.s.a.BackendRegistry  ] [os1] Not yet initialized (you may need to run securityadmin)
+�[2025-11-24T17:12:18,399][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'rolesmapping' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,400][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'internalusers' with /usr/share/opensearch/config/opensearch-security/internal_users.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=false
+�[2025-11-24T17:12:18,408][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:18,413][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] update_mapping [_doc]
+�[2025-11-24T17:12:18,485][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'internalusers' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,485][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'actiongroups' with /usr/share/opensearch/config/opensearch-security/action_groups.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=false
+�[2025-11-24T17:12:18,490][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:18,494][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] update_mapping [_doc]
+�[2025-11-24T17:12:18,550][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'actiongroups' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,550][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'tenants' with /usr/share/opensearch/config/opensearch-security/tenants.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=false
+�[2025-11-24T17:12:18,555][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:18,559][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] update_mapping [_doc]
+�[2025-11-24T17:12:18,617][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'tenants' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,617][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'nodesdn' with /usr/share/opensearch/config/opensearch-security/nodes_dn.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=true
+�[2025-11-24T17:12:18,623][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:18,628][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] update_mapping [_doc]
+�[2025-11-24T17:12:18,683][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'nodesdn' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,683][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'whitelist' with /usr/share/opensearch/config/opensearch-security/whitelist.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=true
+�[2025-11-24T17:12:18,688][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:18,691][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] update_mapping [_doc]
+�[2025-11-24T17:12:18,753][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'whitelist' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,753][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'allowlist' with /usr/share/opensearch/config/opensearch-security/allowlist.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=true
+�[2025-11-24T17:12:18,757][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:18,761][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] update_mapping [_doc]
+�[2025-11-24T17:12:18,815][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'allowlist' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,815][INFO ][o.o.s.s.ConfigHelper     ] [os1] Will update 'audit' with /usr/share/opensearch/config/opensearch-security/audit.yml and populate it with empty doc if file missing and populateEmptyIfFileMissing=false
+�[2025-11-24T17:12:18,829][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg]
+�[2025-11-24T17:12:18,833][INFO ][o.o.c.m.MetadataMappingService] [os1] [.opendistro_security/Q7wFihPTSWqzVYmaoYHTfg] update_mapping [_doc]
+�[2025-11-24T17:12:18,886][INFO ][o.o.s.s.ConfigHelper     ] [os1] Doc with id 'audit' and version 2 is updated in .opendistro_security index.
+�[2025-11-24T17:12:18,982][INFO ][stdout                   ] [os1] [FINE] No subscribers registered for event class org.opensearch.security.securityconf.DynamicConfigFactory$NodesDnModelImpl
+�[2025-11-24T17:12:18,982][INFO ][stdout                   ] [os1] [FINE] No subscribers registered for event class org.greenrobot.eventbus.NoSubscriberEvent
+[2025-11-24T17:12:18,982][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing on REST API is enabled.
+�[2025-11-24T17:12:18,982][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] [AUTHENTICATED, GRANTED_PRIVILEGES] are excluded from REST API auditing.
+[2025-11-24T17:12:18,983][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing on Transport API is enabled.
+�[2025-11-24T17:12:18,983][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] [AUTHENTICATED, GRANTED_PRIVILEGES] are excluded from Transport API auditing.
+[2025-11-24T17:12:18,983][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing of request body is enabled.
+�[2025-11-24T17:12:18,983][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Bulk requests resolution is disabled during request auditing.
+[2025-11-24T17:12:18,983][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Index resolution is enabled during request auditing.
+[2025-11-24T17:12:18,983][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Sensitive headers exclusion from auditing is enabled.
+[2025-11-24T17:12:18,983][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing requests from kibanaserver users is disabled.
+[2025-11-24T17:12:18,983][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing request headers <NONE> is disabled.
+[2025-11-24T17:12:18,983][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing request url params <NONE> is disabled.
+�[2025-11-24T17:12:18,985][WARN ][o.o.s.a.r.AuditMessageRouter] [os1] No endpoint configured for categories [BAD_HEADERS, FAILED_LOGIN, MISSING_PRIVILEGES, GRANTED_PRIVILEGES, OPENDISTRO_SECURITY_INDEX_ATTEMPT, SSL_EXCEPTION, AUTHENTICATED, INDEX_EVENT, COMPLIANCE_DOC_READ, COMPLIANCE_DOC_WRITE, COMPLIANCE_EXTERNAL_CONFIG, COMPLIANCE_INTERNAL_CONFIG_READ, COMPLIANCE_INTERNAL_CONFIG_WRITE], using default endpoint
+[2025-11-24T17:12:18,985][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing of external configuration is disabled.
+[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing of internal configuration is enabled.
+�[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing only metadata information for read request is enabled.
+[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing will watch {} for read requests.
+�[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing read operation requests from kibanaserver users is disabled.
+�[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing only metadata information for write request is enabled.
+[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing diffs for write requests is disabled.
+�[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing write operation requests from kibanaserver users is disabled.
+[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Auditing will watch <NONE> for write requests.
+[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] .opendistro_security is used as internal security index.
+[2025-11-24T17:12:18,986][INFO ][o.o.s.a.i.AuditLogImpl   ] [os1] Internal index used for posting audit logs is null
+[2025-11-24T17:12:18,986][INFO ][o.o.s.c.ConfigurationRepository] [os1] Hot-reloading of audit configuration is enabled
+[2025-11-24T17:12:18,986][INFO ][o.o.s.c.ConfigurationRepository] [os1] Node 'os1' initialized
+[2025-11-24T17:12:26,776][INFO ][o.o.m.a.MLModelAutoReDeployer] [os1] Index not found, not performing auto reloading!
+[2025-11-24T17:12:26,776][INFO ][o.o.m.c.MLCommonsClusterManagerEventListener] [os1] Starting ML sync up job...
+�[2025-11-24T17:12:36,783][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.plugins-ml-config/ZAzmwAYiSqGBNv31KCPu3Q]
+�[2025-11-24T17:12:36,787][INFO ][o.o.c.m.MetadataCreateIndexService] [os1] [.plugins-ml-config] creating index, cause [api], templates [], shards [1]/[1]
+�[2025-11-24T17:12:36,787][INFO ][o.o.c.r.a.AllocationService] [os1] updating number_of_replicas to [0] for indices [.plugins-ml-config]
+�[2025-11-24T17:12:36,787][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+�[2025-11-24T17:12:36,827][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.plugins-ml-config/ZAzmwAYiSqGBNv31KCPu3Q]
+�[2025-11-24T17:12:36,903][INFO ][o.o.c.r.a.AllocationService] [os1] Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[.plugins-ml-config][0]]]).
+[2025-11-24T17:12:36,940][INFO ][o.o.m.e.i.MLIndicesHandler] [os1] create index:.plugins-ml-config
+�[2025-11-24T17:12:36,942][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+[2025-11-24T17:12:36,981][INFO ][o.o.m.c.MLSyncUpCron     ] [os1] ML configuration initialized successfully
+[2025-11-24T17:13:16,755][INFO ][o.o.i.i.ManagedIndexCoordinator] [os1] Performing ISM template migration.
+[2025-11-24T17:13:16,756][INFO ][o.o.i.i.m.ISMTemplateService] [os1] Doing ISM template migration 1 time.
+�[2025-11-24T17:13:16,756][INFO ][o.o.i.i.m.ISMTemplateService] [os1] Use 2025-11-24T16:12:16.753Z as migrating ISM template last_updated_time
+[2025-11-24T17:13:16,757][INFO ][o.o.i.i.m.ISMTemplateService] [os1] ISM templates: {}
+[2025-11-24T17:13:16,757][INFO ][o.o.i.i.m.ISMTemplateService] [os1] Policies to update: []
+[2025-11-24T17:13:16,758][INFO ][o.o.i.i.ManagedIndexCoordinator] [os1] Performing move cluster state metadata.
+�[2025-11-24T17:13:16,758][INFO ][o.o.i.i.MetadataService  ] [os1] ISM config index not exist, so we cancel the metadata migration job.
+�[2025-11-24T17:13:16,760][INFO ][o.o.i.i.m.ISMTemplateService] [os1] Failure experienced when migrating ISM Template and update ISM policies: {}
+�[2025-11-24T17:13:16,811][INFO ][o.o.c.s.ClusterSettings  ] [os1] updating [plugins.index_state_management.template_migration.control] from [0] to [-1]
+�[2025-11-24T17:13:16,814][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+[2025-11-24T17:13:16,815][INFO ][o.o.i.i.m.ISMTemplateService] [os1] Successfully update template migration setting
+[2025-11-24T17:14:16,759][INFO ][o.o.i.i.ManagedIndexCoordinator] [os1] Cancel background move metadata process.
+[2025-11-24T17:14:16,759][INFO ][o.o.i.i.ManagedIndexCoordinator] [os1] Performing move cluster state metadata.
+[2025-11-24T17:14:16,759][INFO ][o.o.i.i.MetadataService  ] [os1] Move metadata has finished.
+�[2025-11-24T17:15:49,208][DEPRECATION][o.o.d.c.m.MetadataCreateIndexService] [os1] index name [.kibana_1] starts with a dot '.', in the next major version, index names starting with a dot are reserved for hidden indices and system indices
+�[2025-11-24T17:15:49,217][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.kibana_1/CQPcHi7ZQsGBPjZf4k-haw]
+�[2025-11-24T17:15:49,477][INFO ][o.o.c.m.MetadataCreateIndexService] [os1] [.kibana_1] creating index, cause [api], templates [], shards [1]/[1]
+[2025-11-24T17:15:49,480][INFO ][o.o.c.r.a.AllocationService] [os1] updating number_of_replicas to [0] for indices [.kibana_1]
+�[2025-11-24T17:15:49,481][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+�[2025-11-24T17:15:49,611][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[.kibana_1/CQPcHi7ZQsGBPjZf4k-haw]
+�[2025-11-24T17:15:49,925][INFO ][o.o.c.r.a.AllocationService] [os1] Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[.kibana_1][0]]]).
+�[2025-11-24T17:15:50,077][WARN ][o.o.c.r.a.AllocationService] [os1] Falling back to single shard assignment since batch mode disable or multiple custom allocators set
+�[2025-11-24T17:15:59,491][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[jL3W2tg_SmqoNFRw8g9ngA/sCQXfloxRJqSZipyXuPa-Q]
+�[2025-11-24T17:15:59,510][DEPRECATION][o.o.d.c.t.FormatNames    ] [os1] Camel case format name dateOptionalTime is deprecated and will be removed in a future version. Use snake case name date_optional_time instead.
+�[2025-11-24T17:15:59,528][INFO ][o.o.c.m.MetadataIndexTemplateService] [os1] adding template [wazuh-statistics] for index patterns [wazuh-statistics-*]
+�[2025-11-24T17:15:59,747][INFO ][o.o.p.PluginsService     ] [os1] PluginService:onIndexModule index:[3ofDk9zaRtuTwRI9y-1OCA/BQOMX_5cTnKqtMwrDWddtQ]
+�[2025-11-24T17:15:59,764][INFO ][o.o.c.m.MetadataIndexTemplateService] [os1] adding template [wazuh-agent] for index patterns [wazuh-monitoring-*]
+[2025-11-24T17:17:16,524][INFO ][o.o.j.s.JobSweeper       ] [os1] Running full sweep
+[2025-11-24T17:17:16,768][INFO ][o.o.i.i.PluginVersionSweepCoordinator] [os1] Canceling sweep ism plugin version job
