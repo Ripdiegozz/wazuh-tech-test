@@ -46,6 +46,10 @@ services:
       # map the Docker host port 5601 to the container port 5601
       - 5601:5601
     entrypoint: [ "tail", "-f", "/dev/null" ]
+    environment:
+      # Force polling for file change detection on Windows/WSL2
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
     volumes:
       # Mount the src/ directory as a plugin
       - ./src:/home/node/kbn/plugins/custom_plugin
