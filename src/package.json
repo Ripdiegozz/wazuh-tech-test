@@ -6,6 +6,19 @@
     "build": "yarn plugin-helpers build",
     "plugin-helpers": "node ../../scripts/plugin_helpers",
     "osd": "node ../../scripts/osd",
-    "test": "node test/jest"
+    "test": "node test/jest",
+    "test:watch": "node test/jest --watch",
+    "test:coverage": "node test/jest --coverage"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^4.36.1",
+    "use-sync-external-store": "^1.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^12.1.5",
+    "@testing-library/user-event": "^14.4.3",
+    "@types/jest": "^29.5.0",
+    "@types/use-sync-external-store": "^0.0.6"
   }
 }
