@@ -220,64 +220,50 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
           <EuiIcon type="listAdd" size="l" />
           Security TODO Manager
         </h1>
-        <EuiFlexGroup gutterSize="s" alignItems="center" responsive={false}>
-          {/* Keyboard Shortcuts Help */}
-          <EuiFlexItem grow={false}>
-            <EuiPopover
-              button={
-                <EuiToolTip content="Keyboard shortcuts (?)">
-                  <EuiButtonIcon
-                    iconType="keyboard"
-                    aria-label="Keyboard shortcuts"
-                    onClick={() => setIsShortcutsOpen(!isShortcutsOpen)}
-                  />
-                </EuiToolTip>
-              }
-              isOpen={isShortcutsOpen}
-              closePopover={() => setIsShortcutsOpen(false)}
-              anchorPosition="downRight"
-            >
-              <div style={{ width: 280 }}>
-                <EuiText size="s">
-                  <h4>Keyboard Shortcuts</h4>
+        <EuiPopover
+          button={
+            <EuiToolTip content="Keyboard shortcuts">
+              <EuiButtonIcon
+                iconType="keyboard"
+                aria-label="Keyboard shortcuts"
+                onClick={() => setIsShortcutsOpen(!isShortcutsOpen)}
+              />
+            </EuiToolTip>
+          }
+          isOpen={isShortcutsOpen}
+          closePopover={() => setIsShortcutsOpen(false)}
+          anchorPosition="downRight"
+        >
+          <div style={{ width: 280 }}>
+            <EuiText size="s">
+              <h4>Keyboard Shortcuts</h4>
+            </EuiText>
+            <EuiSpacer size="s" />
+            {KEYBOARD_SHORTCUTS_HELP.map((group) => (
+              <div key={group.category}>
+                <EuiText size="xs" color="subdued">
+                  <strong>{group.category}</strong>
                 </EuiText>
-                <EuiSpacer size="s" />
-                {KEYBOARD_SHORTCUTS_HELP.map((group) => (
-                  <div key={group.category}>
-                    <EuiText size="xs" color="subdued">
-                      <strong>{group.category}</strong>
-                    </EuiText>
-                    {group.shortcuts.map((s) => (
-                      <EuiFlexGroup
-                        key={s.keys}
-                        justifyContent="spaceBetween"
-                        alignItems="center"
-                        gutterSize="s"
-                      >
-                        <EuiFlexItem>
-                          <EuiText size="xs">{s.description}</EuiText>
-                        </EuiFlexItem>
-                        <EuiFlexItem grow={false}>
-                          <code>{s.keys}</code>
-                        </EuiFlexItem>
-                      </EuiFlexGroup>
-                    ))}
-                    <EuiSpacer size="xs" />
-                  </div>
+                {group.shortcuts.map((s) => (
+                  <EuiFlexGroup
+                    key={s.keys}
+                    justifyContent="spaceBetween"
+                    alignItems="center"
+                    gutterSize="s"
+                  >
+                    <EuiFlexItem>
+                      <EuiText size="xs">{s.description}</EuiText>
+                    </EuiFlexItem>
+                    <EuiFlexItem grow={false}>
+                      <code>{s.keys}</code>
+                    </EuiFlexItem>
+                  </EuiFlexGroup>
                 ))}
+                <EuiSpacer size="xs" />
               </div>
-            </EuiPopover>
-          </EuiFlexItem>
-          <EuiFlexItem grow={false}>
-            <EuiButton
-              fill
-              iconType="plus"
-              onClick={openCreateModal}
-            >
-              Create
-            </EuiButton>
-          </EuiFlexItem>
-        </EuiFlexGroup>
+            ))}
+          </div>
+        </EuiPopover>
       </header>
 
       {/* Navigation Tabs */}
@@ -350,6 +336,13 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 valueOfSelected={priorityFilter}
                 onChange={(value) => setPriorityFilter(value)}
               />
+              <EuiButton
+                fill
+                iconType="plus"
+                onClick={openCreateModal}
+              >
+                Create
+              </EuiButton>
             </div>
           </div>
         )}

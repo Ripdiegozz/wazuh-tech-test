@@ -99,6 +99,9 @@
   &__actions {
     margin-left: auto;
     display: flex;
+    align-items: center;
+    gap: $euiSizeM;
+    display: flex;
     gap: $euiSizeS;
   }
 }
