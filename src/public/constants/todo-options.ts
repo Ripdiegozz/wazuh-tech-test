@@ -2,16 +2,17 @@ import React from 'react';
 import { EuiBadge } from '@elastic/eui';
 import { TodoStatus, TodoPriority, ComplianceStandard } from '../../common/types';
 
-// Status Options
+// Status Options for EuiSuperSelect
+// Using EUI semantic colors instead of hardcoded hex values
 export const STATUS_OPTIONS = [
-  { value: TodoStatus.PLANNED, inputDisplay: React.createElement(EuiBadge, { color: '#6B7280' }, 'To Do') },
-  { value: TodoStatus.IN_PROGRESS, inputDisplay: React.createElement(EuiBadge, { color: '#3B82F6' }, 'In Progress') },
-  { value: TodoStatus.BLOCKED, inputDisplay: React.createElement(EuiBadge, { color: '#EF4444' }, 'Blocked') },
-  { value: TodoStatus.COMPLETED_SUCCESS, inputDisplay: React.createElement(EuiBadge, { color: '#10B981' }, 'Done') },
-  { value: TodoStatus.COMPLETED_ERROR, inputDisplay: React.createElement(EuiBadge, { color: '#F59E0B' }, 'Error') },
+  { value: TodoStatus.PLANNED, inputDisplay: React.createElement(EuiBadge, { color: 'default' }, 'To Do') },
+  { value: TodoStatus.IN_PROGRESS, inputDisplay: React.createElement(EuiBadge, { color: 'primary' }, 'In Progress') },
+  { value: TodoStatus.BLOCKED, inputDisplay: React.createElement(EuiBadge, { color: 'danger' }, 'Blocked') },
+  { value: TodoStatus.COMPLETED_SUCCESS, inputDisplay: React.createElement(EuiBadge, { color: 'success' }, 'Done') },
+  { value: TodoStatus.COMPLETED_ERROR, inputDisplay: React.createElement(EuiBadge, { color: 'warning' }, 'Error') },
 ];
 
-// Priority Options
+// Priority Options for EuiSuperSelect
 export const PRIORITY_OPTIONS = [
   { value: TodoPriority.LOW, inputDisplay: React.createElement(EuiBadge, { color: 'hollow' }, 'Low') },
   { value: TodoPriority.MEDIUM, inputDisplay: React.createElement(EuiBadge, { color: 'primary' }, 'Medium') },
@@ -19,7 +20,7 @@ export const PRIORITY_OPTIONS = [
   { value: TodoPriority.CRITICAL, inputDisplay: React.createElement(EuiBadge, { color: 'danger' }, 'Critical') },
 ];
 
-// Compliance Options
+// Compliance Standards Options for EuiComboBox
 export const COMPLIANCE_OPTIONS = [
   { label: 'PCI DSS', value: ComplianceStandard.PCI_DSS },
   { label: 'ISO 27001', value: ComplianceStandard.ISO_27001 },
@@ -29,7 +30,7 @@ export const COMPLIANCE_OPTIONS = [
   { label: 'NIST', value: ComplianceStandard.NIST },
 ];
 
-// Suggested Tags
+// Suggested Tags for EuiComboBox
 export const SUGGESTED_TAGS = [
   { label: 'security' },
   { label: 'compliance' },
@@ -43,4 +44,6 @@ export const SUGGESTED_TAGS = [
   { label: 'encryption' },
 ];
 
+// Helper: Tag labels as string array
 export const SUGGESTED_TAG_LABELS = SUGGESTED_TAGS.map(t => t.label);
+
