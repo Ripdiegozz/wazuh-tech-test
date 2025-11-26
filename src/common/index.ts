@@ -1,2 +1,8 @@
-export const PLUGIN_ID = 'customPlugin';
-export const PLUGIN_NAME = 'TO-DO plugin';
+// Re-export constants
+export * from "./constants";
+
+// Re-export types
+export * from "./types";
+
+// Re-export schemas
+// export * from "./schemas";
