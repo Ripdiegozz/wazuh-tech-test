@@ -1,19 +1,37 @@
-// # Run Jest tests
-//
-// All args will be forwarded directly to Jest, e.g. to watch tests run:
-//
-//     node test/jest --watch
-//
-// or to build code coverage:
-//
-//     node test/jest --coverage
-//
-// See all cli options in https://facebook.github.io/jest/docs/cli.html
-
 const path = require('path');
-process.argv.push('--config', path.resolve(__dirname, './config.js'));
 
-require('../../../src/setup_node_env');
-const jest = require('../../../node_modules/jest');
-
-jest.run(process.argv.slice(2));
+module.exports = {
+  rootDir: path.resolve(__dirname, '..'),
+  roots: ['<rootDir>/public', '<rootDir>/server', '<rootDir>/common'],
+  testEnvironment: 'jsdom',
+  testMatch: ['**/*.test.{ts,tsx}'],
+  setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
+  moduleNameMapper: {
+    '^@elastic/eui$': '<rootDir>/../../node_modules/@elastic/eui',
+    '^@elastic/eui/(.*)$': '<rootDir>/../../node_modules/@elastic/eui/$1',
+    '\\.(css|scss)$': 'identity-obj-proxy',
+  },
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      tsconfig: '<rootDir>/tsconfig.json',
+    }],
+  },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(@elastic/eui|@tanstack/react-query|zustand|zod)/)',
+  ],
+  collectCoverageFrom: [
+    '<rootDir>/{common,public,server}/**/*.{ts,tsx}',
+    '!<rootDir>/{common,public,server}/**/*.test.{ts,tsx}',
+    '!<rootDir>/{common,public,server}/**/index.{ts,tsx}',
+    '!<rootDir>/**/types.ts',
+  ],
+  coverageThreshold: {
+    global: {
+      statements: 70,
+      branches: 60,
+      functions: 70,
+      lines: 70,
+    },
+  },
+  testTimeout: 10000,
+};
