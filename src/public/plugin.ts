@@ -5,7 +5,7 @@ import {
   CustomPluginPluginStart,
   AppPluginStartDependencies,
 } from './types';
-import { PLUGIN_NAME } from '../common';
+import { PLUGIN_ICON, PLUGIN_NAME } from '../common';
 
 export class CustomPluginPlugin
   implements Plugin<CustomPluginPluginSetup, CustomPluginPluginStart> {
@@ -14,6 +14,7 @@ export class CustomPluginPlugin
     core.application.register({
       id: 'customPlugin',
       title: PLUGIN_NAME,
+      euiIconType: PLUGIN_ICON,
       async mount(params: AppMountParameters) {
         // Load application bundle
         const { renderApp } = await import('./application');
