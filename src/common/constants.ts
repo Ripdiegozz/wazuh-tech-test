@@ -7,11 +7,21 @@ export const API_BASE_PATH = '/api/custom_plugin';
 
 // API endpoints
 export const API_ROUTES = {
+  // CRUD
   TODOS: `${API_BASE_PATH}/todos`,
   TODO_BY_ID: `${API_BASE_PATH}/todos/{id}`,
+  TODO_SEARCH: `${API_BASE_PATH}/todos/search`,
   TODO_STATISTICS: `${API_BASE_PATH}/todos/statistics`,
+  // Single item actions
   TODO_ARCHIVE: `${API_BASE_PATH}/todos/{id}/archive`,
   TODO_RESTORE: `${API_BASE_PATH}/todos/{id}/restore`,
+  // Bulk operations
+  BULK_DELETE: `${API_BASE_PATH}/todos/bulk/delete`,
+  BULK_ARCHIVE: `${API_BASE_PATH}/todos/bulk/archive`,
+  BULK_RESTORE: `${API_BASE_PATH}/todos/bulk/restore`,
+  BULK_STATUS: `${API_BASE_PATH}/todos/bulk/status`,
+  BULK_PRIORITY: `${API_BASE_PATH}/todos/bulk/priority`,
+  BULK_ASSIGN: `${API_BASE_PATH}/todos/bulk/assign`,
 } as const;
 
 // Default pagination settings

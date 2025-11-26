@@ -1,8 +1,6 @@
 import { schema, TypeOf } from '@osd/config-schema';
 
-/**
- * Schema for creating a TODO item
- */
+// Schema for creating a TODO item
 export const createTodoSchema = schema.object({
   title: schema.string({ minLength: 1, maxLength: 200 }),
   description: schema.maybe(schema.string({ maxLength: 2000 })),
@@ -42,9 +40,7 @@ export const createTodoSchema = schema.object({
   coverImage: schema.maybe(schema.string({ maxLength: 500 })),
 });
 
-/**
- * Schema for updating a TODO item
- */
+// Schema for updating a TODO item
 export const updateTodoSchema = schema.object({
   title: schema.maybe(schema.string({ minLength: 1, maxLength: 200 })),
   description: schema.maybe(schema.string({ maxLength: 2000 })),
@@ -90,10 +86,8 @@ export const updateTodoSchema = schema.object({
   coverImage: schema.maybe(schema.string({ maxLength: 500 })),
 });
 
-/**
- * Schema for search parameters
- * Note: Query params come as strings, so we use string types and convert in the service
- */
+// Schema for search parameters
+// Note: Query params come as strings, so we use string types and convert in the service
 export const searchTodoSchema = schema.object({
   query: schema.maybe(schema.string({ maxLength: 500 })),
   status: schema.maybe(schema.oneOf([
@@ -122,15 +116,48 @@ export const searchTodoSchema = schema.object({
   archived: schema.maybe(schema.oneOf([schema.boolean(), schema.string()])),
 });
 
-/**
- * Schema for route parameters with ID
- */
+// Schema for route parameters with ID
 export const idParamSchema = schema.object({
   id: schema.string(),
 });
 
+// Bulk Operation Schemas
+export const bulkIdsSchema = schema.object({
+  ids: schema.arrayOf(schema.string(), { minSize: 1, maxSize: 100 }),
+});
+
+export const bulkUpdateStatusSchema = schema.object({
+  ids: schema.arrayOf(schema.string(), { minSize: 1, maxSize: 100 }),
+  status: schema.oneOf([
+    schema.literal('planned'),
+    schema.literal('in_progress'),
+    schema.literal('completed_success'),
+    schema.literal('completed_error'),
+    schema.literal('blocked'),
+  ]),
+});
+
+export const bulkUpdatePrioritySchema = schema.object({
+  ids: schema.arrayOf(schema.string(), { minSize: 1, maxSize: 100 }),
+  priority: schema.oneOf([
+    schema.literal('low'),
+    schema.literal('medium'),
+    schema.literal('high'),
+    schema.literal('critical'),
+  ]),
+});
+
+export const bulkAssignSchema = schema.object({
+  ids: schema.arrayOf(schema.string(), { minSize: 1, maxSize: 100 }),
+  assignee: schema.maybe(schema.string({ maxLength: 100 })),
+});
+
+// Export types
 export type CreateTodoSchema = TypeOf<typeof createTodoSchema>;
 export type UpdateTodoSchema = TypeOf<typeof updateTodoSchema>;
 export type SearchTodoSchema = TypeOf<typeof searchTodoSchema>;
 export type IdParamSchema = TypeOf<typeof idParamSchema>;
-
+export type BulkIdsSchema = TypeOf<typeof bulkIdsSchema>;
+export type BulkUpdateStatusSchema = TypeOf<typeof bulkUpdateStatusSchema>;
+export type BulkUpdatePrioritySchema = TypeOf<typeof bulkUpdatePrioritySchema>;
+export type BulkAssignSchema = TypeOf<typeof bulkAssignSchema>;

@@ -1,0 +1,451 @@
+import { v4 as uuidv4 } from 'uuid';
+import { Logger } from 'src/core/server';
+import { OpenSearchService } from './opensearch.service';
+import {
+  TodoItem,
+  CreateTodoRequest,
+  UpdateTodoRequest,
+  TodoSearchParams,
+  PaginatedResponse,
+  TodoStatistics,
+  TodoStatus,
+  TodoPriority
+} from '../../common/types';
+import { 
+  TODO_INDEX_NAME, 
+  DEFAULT_PAGE_SIZE, 
+  DEFAULT_SORT_FIELD, 
+  DEFAULT_SORT_ORDER 
+} from '../../common/constants';
+
+// Filter Builder Utilities
+type FilterCondition = Record<string, any>;
+
+interface FilterBuilder {
+  addTerm: (field: string, value: any) => FilterBuilder;
+  addTerms: (field: string, values: any[] | undefined) => FilterBuilder;
+  addRange: (field: string, gte?: string, lte?: string) => FilterBuilder;
+  addMatch: (fields: string[], query: string, boost?: Record<string, number>) => FilterBuilder;
+  build: () => { must: FilterCondition[]; filter: FilterCondition[] };
+}
+
+const createFilterBuilder = (): FilterBuilder => {
+  const must: FilterCondition[] = [];
+  const filter: FilterCondition[] = [];
+
+  return {
+    addTerm(field: string, value: any) {
+      if (value !== undefined && value !== null && value !== '') {
+        filter.push({ term: { [field]: value } });
+      }
+      return this;
+    },
+
+    addTerms(field: string, values: any[] | undefined) {
+      if (values && values.length > 0) {
+        filter.push({ terms: { [field]: values } });
+      }
+      return this;
+    },
+
+    addRange(field: string, gte?: string, lte?: string) {
+      if (gte || lte) {
+        const range: Record<string, string> = {};
+        if (gte) range.gte = gte;
+        if (lte) range.lte = lte;
+        filter.push({ range: { [field]: range } });
+      }
+      return this;
+    },
+
+    addMatch(fields: string[], query: string, boost?: Record<string, number>) {
+      if (query && query.trim()) {
+        const fieldsWithBoost = fields.map(f => boost?.[f] ? `${f}^${boost[f]}` : f);
+        must.push({
+          multi_match: {
+            query,
+            fields: fieldsWithBoost,
+          },
+        });
+      }
+      return this;
+    },
+
+    build() {
+      return { must, filter };
+    },
+  };
+};
+
+// Bulk Operation Result
+export interface BulkOperationResult {
+  success: boolean;
+  processed: number;
+  failed: number;
+  errors?: Array<{ id: string; error: string }>;
+}
+
+// TodoService - Business logic for TODO items
+export class TodoService {
+  constructor(
+    private readonly osService: OpenSearchService,
+    private readonly logger: Logger
+  ) {
+    this.initialize();
+  }
+
+  private async initialize() {
+    try {
+      await this.osService.ensureIndex();
+    } catch (error) {
+      this.logger.error('Failed to initialize TodoService', error);
+    }
+  }
+
+  public async createTodo(data: CreateTodoRequest): Promise<TodoItem> {
+    const client = this.osService.getClient();
+    const now = new Date().toISOString();
+    
+    const todo: TodoItem = {
+      id: uuidv4(),
+      title: data.title,
+      description: data.description,
+      status: data.status || TodoStatus.PLANNED,
+      priority: data.priority || TodoPriority.MEDIUM,
+      tags: data.tags || [],
+      complianceStandards: data.complianceStandards || [],
+      assignee: data.assignee,
+      createdAt: now,
+      updatedAt: now,
+      plannedDate: data.plannedDate,
+      dueDate: data.dueDate,
+      archived: false,
+      storyPoints: data.storyPoints,
+      coverImage: data.coverImage,
+    };
+
+    await client.index({
+      index: TODO_INDEX_NAME,
+      id: todo.id,
+      body: todo,
+      refresh: 'wait_for',
+    });
+
+    this.logger.info(`Created TODO item: ${todo.id}`);
+    return todo;
+  }
+
+  public async getTodoById(id: string): Promise<TodoItem | null> {
+    const client = this.osService.getClient();
+    
+    try {
+      const response = await client.get({
+        index: TODO_INDEX_NAME,
+        id,
+      });
+
+      return response.body._source as TodoItem;
+    } catch (error: any) {
+      if (error.statusCode === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  public async updateTodo(id: string, data: UpdateTodoRequest): Promise<TodoItem> {
+    const client = this.osService.getClient();
+    const existing = await this.getTodoById(id);
+    
+    if (!existing) {
+      throw new Error(`TODO item not found: ${id}`);
+    }
+
+    const updated: TodoItem = {
+      ...existing,
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await client.update({
+      index: TODO_INDEX_NAME,
+      id,
+      body: { doc: updated },
+      refresh: 'wait_for',
+    });
+
+    this.logger.info(`Updated TODO item: ${id}`);
+    return updated;
+  }
+
+  public async deleteTodo(id: string): Promise<void> {
+    const client = this.osService.getClient();
+    
+    await client.delete({
+      index: TODO_INDEX_NAME,
+      id,
+      refresh: 'wait_for',
+    });
+
+    this.logger.info(`Deleted TODO item: ${id}`);
+  }
+
+  public async searchTodos(params: TodoSearchParams): Promise<PaginatedResponse<TodoItem>> {
+    const client = this.osService.getClient();
+    
+    const {
+      query,
+      status,
+      priority,
+      tags,
+      complianceStandards,
+      assignee,
+      dateFrom,
+      dateTo,
+      sortField = DEFAULT_SORT_FIELD,
+      sortOrder = DEFAULT_SORT_ORDER,
+      page = 1,
+      size = DEFAULT_PAGE_SIZE,
+      archived,
+    } = params;
+
+    // Build filters using the filter builder
+    const { must, filter } = createFilterBuilder()
+      .addMatch(['title', 'description', 'tags'], query || '', { title: 2 })
+      .addTerm('archived', archived)
+      .addTerm('assignee', assignee)
+      .addTerms('status', status)
+      .addTerms('priority', priority)
+      .addTerms('tags', tags)
+      .addTerms('complianceStandards', complianceStandards)
+      .addRange('createdAt', dateFrom, dateTo)
+      .build();
+
+    const from = (page - 1) * size;
+
+    const response = await client.search({
+      index: TODO_INDEX_NAME,
+      body: {
+        query: {
+          bool: {
+            must: must.length > 0 ? must : [{ match_all: {} }],
+            filter,
+          },
+        },
+        sort: [{ [sortField]: { order: sortOrder } }],
+        from,
+        size,
+      },
+    });
+
+    const hits = response.body.hits;
+    const items = hits.hits.map((hit: any) => hit._source as TodoItem);
+    const total = hits.total.value;
+
+    return {
+      items,
+      total,
+      page,
+      size,
+      totalPages: Math.ceil(total / size),
+    };
+  }
+
+  public async archiveTodo(id: string): Promise<TodoItem> {
+    return this.updateTodo(id, {
+      archived: true,
+      archivedAt: new Date().toISOString(),
+    });
+  }
+
+  public async restoreTodo(id: string): Promise<TodoItem> {
+    return this.updateTodo(id, {
+      archived: false,
+      archivedAt: undefined,
+    });
+  }
+
+  // ============================================
+  // Bulk Operations
+  // ============================================
+
+  
+  // Bulk update status for multiple TODOs
+  public async bulkUpdateStatus(ids: string[], status: TodoStatus): Promise<BulkOperationResult> {
+    return this.bulkUpdate(ids, { status });
+  }
+
+  // Bulk update any fields for multiple TODOs
+  public async bulkUpdate(ids: string[], updates: UpdateTodoRequest): Promise<BulkOperationResult> {
+    if (!ids || ids.length === 0) {
+      return { success: true, processed: 0, failed: 0 };
+    }
+
+    const client = this.osService.getClient();
+    const now = new Date().toISOString();
+    
+    const operations = ids.flatMap((id) => [
+      { update: { _index: TODO_INDEX_NAME, _id: id } },
+      { doc: { ...updates, updatedAt: now } },
+    ]);
+
+    const response = await client.bulk({
+      body: operations,
+      refresh: 'wait_for',
+    });
+
+    const result = this.parseBulkResponse(response.body, ids);
+    this.logger.info(`Bulk updated ${result.processed} TODO items, ${result.failed} failed`);
+    
+    return result;
+  }
+
+  // Bulk delete multiple TODOs
+  public async bulkDelete(ids: string[]): Promise<BulkOperationResult> {
+    if (!ids || ids.length === 0) {
+      return { success: true, processed: 0, failed: 0 };
+    }
+
+    const client = this.osService.getClient();
+    
+    const operations = ids.map((id) => ({
+      delete: { _index: TODO_INDEX_NAME, _id: id },
+    }));
+
+    const response = await client.bulk({
+      body: operations,
+      refresh: 'wait_for',
+    });
+
+    const result = this.parseBulkResponse(response.body, ids);
+    this.logger.info(`Bulk deleted ${result.processed} TODO items, ${result.failed} failed`);
+    
+    return result;
+  }
+
+  // Bulk archive multiple TODOs
+  public async bulkArchive(ids: string[]): Promise<BulkOperationResult> {
+    const now = new Date().toISOString();
+    return this.bulkUpdate(ids, {
+      archived: true,
+      archivedAt: now,
+    });
+  }
+
+  // Bulk restore multiple archived TODOs
+  public async bulkRestore(ids: string[]): Promise<BulkOperationResult> {
+    return this.bulkUpdate(ids, {
+      archived: false,
+      archivedAt: undefined,
+    });
+  }
+
+  // Bulk update priority for multiple TODOs
+  public async bulkUpdatePriority(ids: string[], priority: TodoPriority): Promise<BulkOperationResult> {
+    return this.bulkUpdate(ids, { priority });
+  }
+
+  // Bulk assign TODOs to a user
+  public async bulkAssign(ids: string[], assignee: string | undefined): Promise<BulkOperationResult> {
+    return this.bulkUpdate(ids, { assignee });
+  }
+
+  // Parse OpenSearch bulk response into our result format
+  private parseBulkResponse(response: any, ids: string[]): BulkOperationResult {
+    const errors: Array<{ id: string; error: string }> = [];
+    let failed = 0;
+
+    if (response.errors) {
+      response.items.forEach((item: any, index: number) => {
+        const operation = item.update || item.delete || item.index;
+        if (operation?.error) {
+          failed++;
+          errors.push({
+            id: ids[index],
+            error: operation.error.reason || 'Unknown error',
+          });
+        }
+      });
+    }
+
+    return {
+      success: failed === 0,
+      processed: ids.length - failed,
+      failed,
+      errors: errors.length > 0 ? errors : undefined,
+    };
+  }
+
+  // ============================================
+  // Statistics
+  // ============================================
+
+  public async getStatistics(): Promise<TodoStatistics> {
+    const client = this.osService.getClient();
+    
+    const response = await client.search({
+      index: TODO_INDEX_NAME,
+      body: {
+        size: 0,
+        aggs: {
+          by_status: { 
+            terms: { field: 'status' } 
+          },
+          by_priority: { 
+            terms: { field: 'priority' } 
+          },
+          by_compliance_standard: { 
+            terms: { field: 'complianceStandards' } 
+          },
+          completed_items: {
+            filter: { term: { status: 'completed_success' } },
+            aggs: {
+              avg_completion_time: {
+                avg: {
+                  script: {
+                    source: "if (doc['completedAt'].size() != 0 && doc['createdAt'].size() != 0) { return doc['completedAt'].value.toInstant().toEpochMilli() - doc['createdAt'].value.toInstant().toEpochMilli() } else { return 0 }",
+                  },
+                },
+              },
+            },
+          },
+          overdue_items: {
+            filter: {
+              bool: {
+                must: [
+                  { range: { dueDate: { lt: 'now' } } },
+                  { terms: { status: ['planned', 'in_progress'] } },
+                ],
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const aggs = response.body.aggregations;
+    const total = response.body.hits.total.value;
+
+    return {
+      totalCount: total,
+      byStatus: this.aggregationToRecord(aggs.by_status),
+      byPriority: this.aggregationToRecord(aggs.by_priority),
+      byComplianceStandard: this.aggregationToRecord(aggs.by_compliance_standard),
+      completionRate: total > 0 ? (aggs.completed_items.doc_count / total) * 100 : 0,
+      averageCompletionTime: aggs.completed_items.avg_completion_time.value 
+        ? aggs.completed_items.avg_completion_time.value / (1000 * 60 * 60) 
+        : 0,
+      overdueCount: aggs.overdue_items.doc_count,
+    };
+  }
+
+  private aggregationToRecord(agg: any): Record<string, number> {
+    const result: Record<string, number> = {};
+    if (agg && agg.buckets) {
+      agg.buckets.forEach((bucket: any) => {
+        result[bucket.key] = bucket.doc_count;
+      });
+    }
+    return result;
+  }
+}
