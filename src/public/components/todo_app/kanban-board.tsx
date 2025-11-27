@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import {
   EuiIcon,
   EuiDragDropContext,
   EuiDraggable,
   EuiDroppable,
-  EuiButtonEmpty,
+  EuiLoadingSpinner,
   EuiText,
   DropResult,
 } from '@elastic/eui';
@@ -21,6 +21,12 @@ interface KanbanBoardProps {
   onDeleteTodo: (id: string) => void;
   onCreateInStatus: () => void;
   isPending?: (id: string) => boolean;
+  // Infinite scroll props
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
+  totalCount?: number;
+  loadedCount?: number;
 }
 
 const COLUMN_ORDER: TodoStatus[] = [
@@ -39,10 +45,6 @@ const COLUMN_ICONS: Record<TodoStatus, string> = {
   [TodoStatus.COMPLETED_ERROR]: 'alert',
 };
 
-// Number of items to show initially and load per batch
-const INITIAL_ITEMS_PER_COLUMN = 15;
-const ITEMS_PER_LOAD = 10;
-
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   todosByStatus,
   statusLabels,
@@ -52,99 +54,37 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onDeleteTodo,
   onCreateInStatus,
   isPending = () => false,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
+  totalCount = 0,
+  loadedCount = 0,
 }) => {
-  // Track how many items to show per column
-  const [visibleCounts, setVisibleCounts] = useState<Record<TodoStatus, number>>(() => {
-    const initial: Record<string, number> = {};
-    COLUMN_ORDER.forEach((status) => {
-      initial[status] = INITIAL_ITEMS_PER_COLUMN;
-    });
-    return initial as Record<TodoStatus, number>;
-  });
-
-  // Refs for intersection observers
-  const loadMoreRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  // Reset visible counts when data changes significantly
-  useEffect(() => {
-    // If a column has fewer items than visible count, adjust
-    COLUMN_ORDER.forEach((status) => {
-      const totalItems = todosByStatus[status]?.length || 0;
-      if (totalItems < visibleCounts[status] && totalItems > 0) {
-        setVisibleCounts((prev) => ({
-          ...prev,
-          [status]: Math.max(totalItems, INITIAL_ITEMS_PER_COLUMN),
-        }));
-      }
-    });
-  }, [todosByStatus]);
-
-  // Load more items for a specific column
-  const loadMore = useCallback((status: TodoStatus) => {
-    setVisibleCounts((prev) => ({
-      ...prev,
-      [status]: prev[status] + ITEMS_PER_LOAD,
-    }));
-  }, []);
+  // Ref for intersection observer sentinel
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Set up intersection observer for infinite scroll
   useEffect(() => {
-    const observers: IntersectionObserver[] = [];
+    if (!hasMore || isLoadingMore || !onLoadMore) return;
 
-    COLUMN_ORDER.forEach((status) => {
-      const ref = loadMoreRefs.current[status];
-      if (!ref) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          onLoadMore();
+        }
+      },
+      { 
+        threshold: 0,
+        rootMargin: '500px' // Trigger 500px before reaching the sentinel
+      }
+    );
 
-      const totalItems = todosByStatus[status]?.length || 0;
-      const visibleCount = visibleCounts[status];
-      
-      // Only observe if there are more items to load
-      if (visibleCount >= totalItems) return;
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
 
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            loadMore(status);
-          }
-        },
-        { threshold: 0.1, rootMargin: '100px' }
-      );
-
-      observer.observe(ref);
-      observers.push(observer);
-    });
-
-    return () => {
-      observers.forEach((observer) => observer.disconnect());
-    };
-  }, [todosByStatus, visibleCounts, loadMore]);
-
-  // Get visible items for each column
-  const getVisibleItems = useCallback(
-    (status: TodoStatus): TodoItem[] => {
-      const items = todosByStatus[status] || [];
-      return items.slice(0, visibleCounts[status]);
-    },
-    [todosByStatus, visibleCounts]
-  );
-
-  // Check if column has more items to load
-  const hasMoreItems = useCallback(
-    (status: TodoStatus): boolean => {
-      const totalItems = todosByStatus[status]?.length || 0;
-      return visibleCounts[status] < totalItems;
-    },
-    [todosByStatus, visibleCounts]
-  );
-
-  // Get remaining count
-  const getRemainingCount = useCallback(
-    (status: TodoStatus): number => {
-      const totalItems = todosByStatus[status]?.length || 0;
-      return Math.max(0, totalItems - visibleCounts[status]);
-    },
-    [todosByStatus, visibleCounts]
-  );
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, onLoadMore]);
 
   const onDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result;
@@ -176,10 +116,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     <EuiDragDropContext onDragEnd={onDragEnd}>
       <div className="kanban-board">
         {COLUMN_ORDER.map((status) => {
-          const visibleItems = getVisibleItems(status);
-          const totalItems = todosByStatus[status]?.length || 0;
-          const remaining = getRemainingCount(status);
-          const showLoadMore = hasMoreItems(status);
+          const items = todosByStatus[status] || [];
 
           return (
             <div
@@ -192,11 +129,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   <EuiIcon type={COLUMN_ICONS[status]} size="s" />
                   {statusLabels[status]}
                 </h3>
-                <span className="kanban-column__count">
-                  {visibleItems.length !== totalItems
-                    ? `${visibleItems.length}/${totalItems}`
-                    : totalItems}
-                </span>
+                <span className="kanban-column__count">{items.length}</span>
               </div>
 
               {/* Droppable Area */}
@@ -205,7 +138,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 spacing="m"
                 className="kanban-column__cards"
               >
-                {visibleItems.map((todo, index) => (
+                {items.map((todo, index) => (
                   <EuiDraggable
                     key={todo.id}
                     index={index}
@@ -227,27 +160,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 ))}
               </EuiDroppable>
 
-              {/* Load More / Infinite Scroll Trigger */}
-              {showLoadMore && (
-                <div
-                  ref={(el) => {
-                    loadMoreRefs.current[status] = el;
-                  }}
-                  className="kanban-column__load-more"
-                >
-                  <EuiButtonEmpty
-                    size="s"
-                    iconType="arrowDown"
-                    onClick={() => loadMore(status)}
-                  >
-                    Load {Math.min(remaining, ITEMS_PER_LOAD)} more
-                  </EuiButtonEmpty>
-                  <EuiText size="xs" color="subdued">
-                    {remaining} hidden
-                  </EuiText>
-                </div>
-              )}
-
               {/* Add Button - only in PLANNED column */}
               {status === TodoStatus.PLANNED && (
                 <button
@@ -261,6 +173,21 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           );
         })}
+      </div>
+
+      {/* Infinite Scroll Sentinel & Loading Indicator */}
+      <div ref={loadMoreRef} className="kanban-board__load-more">
+        {isLoadingMore && (
+          <div className="kanban-board__loading">
+            <EuiLoadingSpinner size="m" />
+            <EuiText size="s" color="subdued">Loading more...</EuiText>
+          </div>
+        )}
+        {hasMore && !isLoadingMore && loadedCount < totalCount && (
+          <EuiText size="xs" color="subdued" textAlign="center">
+            Showing {loadedCount} of {totalCount} items
+          </EuiText>
+        )}
       </div>
     </EuiDragDropContext>
   );

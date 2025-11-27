@@ -29,6 +29,20 @@
       background: $euiColorDarkShade;
     }
   }
+
+  &__load-more {
+    padding: $euiSizeM;
+    text-align: center;
+    margin-top: $euiSizeS;
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $euiSizeS;
+    padding: $euiSizeM;
+  }
 }
 
 // Kanban Column

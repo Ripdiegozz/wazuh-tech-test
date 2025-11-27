@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { HttpStart } from '../../../../../src/core/public';
 import { TodosApiService } from '../services';
 import { 
@@ -6,6 +6,7 @@ import {
   TodoSearchParams, 
   CreateTodoRequest, 
   UpdateTodoRequest,
+  PaginatedResponse,
 } from '../../common/types';
 
 // ============================================
@@ -127,6 +128,34 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       },
       staleTime: 60000, // Cache for 1 minute
     });
+  };
+
+  /**
+   * Infinite scroll query for Kanban board
+   * Fetches todos in pages as user scrolls
+   */
+  const useInfiniteKanban = (pageSize: number = 50) => {
+    return useInfiniteQuery<PaginatedResponse<TodoItem>>(
+      [...todoKeys.all, 'kanban', { pageSize }],
+      async ({ pageParam = 1 }) => {
+        const response = await api.searchTodos({
+          archived: false,
+          page: pageParam as number,
+          size: pageSize,
+        });
+        return response;
+      },
+      {
+        getNextPageParam: (lastPage, allPages) => {
+          const totalLoaded = allPages.length * pageSize;
+          if (totalLoaded < lastPage.total) {
+            return allPages.length + 1;
+          }
+          return undefined;
+        },
+        staleTime: 30000,
+      }
+    );
   };
 
   /**
@@ -276,6 +305,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
 
   /**
    * Update todo status (for drag & drop)
+   * Uses optimistic update for both store and infinite query cache
    */
   const useUpdateStatus = () => {
     const queryClient = useQueryClient();
@@ -285,17 +315,55 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
         api.updateTodo(id, { status: status as any }),
       onMutate: async ({ id, status }) => {
         addPendingId(id);
+        
+        // Cancel any outgoing refetches
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
+        await queryClient.cancelQueries({ queryKey: [...todoKeys.all, 'kanban'] });
+        
+        // Update the store (for non-kanban views)
         updateTodoInStore(id, { status: status as any });
+        
+        // Optimistically update the infinite query cache for Kanban
+        const kanbanQueryKey = [...todoKeys.all, 'kanban'];
+        const previousKanbanData = queryClient.getQueriesData({ queryKey: kanbanQueryKey });
+        
+        queryClient.setQueriesData(
+          { queryKey: kanbanQueryKey },
+          (oldData: any) => {
+            if (!oldData?.pages) return oldData;
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                items: page.items.map((item: TodoItem) =>
+                  item.id === id ? { ...item, status: status as any } : item
+                ),
+              })),
+            };
+          }
+        );
+        
+        return { previousKanbanData };
       },
       onSuccess: (_, { id }) => {
         removePendingId(id);
-        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        // Don't invalidate immediately - let optimistic update stay
+        // Only invalidate statistics
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
-      onError: (_, { id }) => {
+      onError: (_, { id }, context) => {
         removePendingId(id);
+        
+        // Restore previous kanban data on error
+        if (context?.previousKanbanData) {
+          context.previousKanbanData.forEach(([queryKey, data]) => {
+            queryClient.setQueryData(queryKey, data);
+          });
+        }
+        
+        // Refetch to ensure consistency
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
       },
     });
   };
@@ -389,6 +457,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
     useTodos,
     useArchivedTodos,
     useArchivedCount,
+    useInfiniteKanban,
     useTodo,
     useStatistics,
     // Mutations

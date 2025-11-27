@@ -112,7 +112,6 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     detailPanelTodo,
     openDetailPanel,
     closeDetailPanel,
-    getTodosByStatus,
     archivedTodos,
     setTodos,
     setArchivedTodos,
@@ -156,6 +155,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     useTodos, 
     useArchivedTodos, 
     useArchivedCount,
+    useInfiniteKanban,
     useStatistics,
     useCreateTodo, 
     useUpdateTodo, 
@@ -172,7 +172,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   // Empty string or whitespace = undefined (load all without query filter)
   const searchQuery = debouncedQuery.trim() || undefined;
   
-  // Fetch todos with pagination and sorting (server-side)
+  // Fetch todos with pagination and sorting (server-side) - for Table View
   const { data: todosData, isLoading: todosLoading } = useTodos({
     query: searchQuery,
     status: filters.status.length > 0 ? filters.status : undefined,
@@ -183,6 +183,15 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     sortField: tableSortField,
     sortOrder: tableSortDirection,
   });
+
+  // Infinite query for Kanban Board - fetches all data progressively
+  const {
+    data: kanbanInfiniteData,
+    fetchNextPage: fetchMoreKanban,
+    hasNextPage: hasMoreKanbanData,
+    isFetchingNextPage: isFetchingMoreKanban,
+    isLoading: kanbanLoading,
+  } = useInfiniteKanban(50);
   
   // Fetch archived todos with pagination and sorting (server-side)
   const { data: archivedData, isLoading: archivedLoading } = useArchivedTodos({
@@ -356,14 +365,59 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     }
   };
 
-  // Get todos grouped by status, then apply client-side status filtering
-  const allTodosByStatus = getTodosByStatus();
+  // Flatten all pages from infinite query into a single array for Kanban
+  const allKanbanTodos = useMemo(() => {
+    if (!kanbanInfiniteData?.pages) return [];
+    return kanbanInfiniteData.pages.flatMap((page) => page.items);
+  }, [kanbanInfiniteData]);
+
+  // Get total count for Kanban (from first page)
+  const kanbanTotalCount = kanbanInfiniteData?.pages?.[0]?.total || 0;
   
-  // Apply client-side status filter if any status filters are selected
+  // Apply CLIENT-SIDE filters to Kanban data
+  const filteredKanbanTodos = useMemo(() => {
+    return allKanbanTodos.filter((todo) => {
+      // Search filter (title & description) - client-side
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const titleMatch = todo.title.toLowerCase().includes(query);
+        const descMatch = todo.description?.toLowerCase().includes(query) || false;
+        if (!titleMatch && !descMatch) return false;
+      }
+      
+      // Priority filter - client-side
+      if (priorityFilter !== 'all' && todo.priority !== priorityFilter) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [allKanbanTodos, searchQuery, priorityFilter]);
+
+  // Group filtered Kanban todos by status
+  const kanbanTodosByStatus = useMemo(() => {
+    const grouped: Record<TodoStatus, TodoItem[]> = {
+      [TodoStatus.PLANNED]: [],
+      [TodoStatus.IN_PROGRESS]: [],
+      [TodoStatus.BLOCKED]: [],
+      [TodoStatus.COMPLETED_SUCCESS]: [],
+      [TodoStatus.COMPLETED_ERROR]: [],
+    };
+    
+    filteredKanbanTodos.forEach((todo) => {
+      if (grouped[todo.status]) {
+        grouped[todo.status].push(todo);
+      }
+    });
+    
+    return grouped;
+  }, [filteredKanbanTodos]);
+  
+  // Apply status filter to Kanban (hide empty columns if filtered)
   const todosByStatus = useMemo(() => {
     // If no status filters selected, show all statuses
     if (filters.status.length === 0) {
-      return allTodosByStatus;
+      return kanbanTodosByStatus;
     }
     
     // Otherwise, only show the selected statuses (empty arrays for unselected)
@@ -376,11 +430,30 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     };
     
     filters.status.forEach((status) => {
-      filtered[status] = allTodosByStatus[status] || [];
+      filtered[status] = kanbanTodosByStatus[status] || [];
     });
     
     return filtered;
-  }, [allTodosByStatus, filters.status]);
+  }, [kanbanTodosByStatus, filters.status]);
+
+  // Count todos by status (unfiltered) for filter badges
+  const statusCounts = useMemo(() => {
+    const counts: Record<TodoStatus, number> = {
+      [TodoStatus.PLANNED]: 0,
+      [TodoStatus.IN_PROGRESS]: 0,
+      [TodoStatus.BLOCKED]: 0,
+      [TodoStatus.COMPLETED_SUCCESS]: 0,
+      [TodoStatus.COMPLETED_ERROR]: 0,
+    };
+    
+    allKanbanTodos.forEach((todo) => {
+      if (counts[todo.status] !== undefined) {
+        counts[todo.status]++;
+      }
+    });
+    
+    return counts;
+  }, [allKanbanTodos]);
 
   // Get flat list of filtered todos for table view (already paginated from server)
   const tableItems = todosData?.items || [];
@@ -544,7 +617,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                     key={status}
                     hasActiveFilters={filters.status.includes(status as TodoStatus)}
                     onClick={() => toggleStatusFilter(status as TodoStatus)}
-                    numFilters={allTodosByStatus[status as TodoStatus]?.length || 0}
+                    numFilters={statusCounts[status as TodoStatus] || 0}
                   >
                     {label}
                   </EuiFilterButton>
@@ -579,7 +652,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
         )}
 
         {/* View Content */}
-        {todosLoading && currentView !== 'archived' && currentView !== 'stats' ? (
+        {((currentView === 'board' && kanbanLoading) || (currentView === 'table' && todosLoading)) ? (
           <EuiFlexGroup justifyContent="center" alignItems="center">
             <EuiFlexItem grow={false}>
               <EuiLoadingSpinner size="xl" />
@@ -602,9 +675,14 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 onEditTodo={openDetailPanel}
                 onStatusChange={handleStatusChange}
                 onArchiveTodo={handleArchiveTodo}
-                  onDeleteTodo={handleDeleteTodo}
+                onDeleteTodo={handleDeleteTodo}
                 onCreateInStatus={openCreateModal}
                 isPending={isPending}
+                hasMore={hasMoreKanbanData || false}
+                isLoadingMore={isFetchingMoreKanban}
+                onLoadMore={fetchMoreKanban}
+                totalCount={kanbanTotalCount}
+                loadedCount={allKanbanTodos.length}
               />
               </EuiTourStep>
             )}
