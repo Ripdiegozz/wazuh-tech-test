@@ -76,14 +76,6 @@ const COMPLIANCE_LABELS: Record<ComplianceStandard, string> = {
   [ComplianceStandard.NIST]: 'NIST',
 };
 
-// Format time duration
-const formatDuration = (hours: number): string => {
-  if (hours < 1) return '< 1 hour';
-  if (hours < 24) return `${Math.round(hours)} hours`;
-  const days = Math.round(hours / 24);
-  return days === 1 ? '1 day' : `${days} days`;
-};
-
 // Progress Bar Component
 const StatProgressBar: React.FC<{
   label: string;
@@ -284,7 +276,6 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({
     byPriority,
     byComplianceStandard,
     completionRate,
-    averageCompletionTime,
     overdueCount,
   } = statistics;
 
@@ -352,19 +343,6 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({
               textAlign="center"
             >
               <EuiIcon type="clock" color={overdueCount > 0 ? 'danger' : 'subdued'} />
-            </EuiStat>
-          </EuiPanel>
-        </EuiFlexItem>
-
-        <EuiFlexItem>
-          <EuiPanel className="stats-card stats-card--time">
-            <EuiStat
-              title={formatDuration(averageCompletionTime)}
-              description="Avg. Completion Time"
-              titleColor="default"
-              textAlign="center"
-            >
-              <EuiIcon type="visTimelion" color="accent" />
             </EuiStat>
           </EuiPanel>
         </EuiFlexItem>

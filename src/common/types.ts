@@ -132,6 +132,5 @@ export interface TodoStatistics {
   byPriority: Record<TodoPriority, number>;
   byComplianceStandard: Record<ComplianceStandard, number>;
   completionRate: number;
-  averageCompletionTime: number; // In hours
   overdueCount: number;
 }
