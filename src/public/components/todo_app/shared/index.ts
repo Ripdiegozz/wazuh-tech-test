@@ -19,3 +19,8 @@ export {
   DateCell,
 } from './table-cells';
 
+export {
+  useTodoTour,
+  TourStepWrapper,
+} from './app-tour';
+

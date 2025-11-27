@@ -1,0 +1,309 @@
+// ============================================
+// Responsive Styles - Mobile & Tablet Support
+// ============================================
+
+// Breakpoints (using EUI patterns)
+$breakpoint-xs: 480px;
+$breakpoint-s: 768px;
+$breakpoint-m: 992px;
+$breakpoint-l: 1200px;
+
+// ============================================
+// Mobile First Overrides (max-width)
+// ============================================
+
+// Extra small devices (phones, less than 480px)
+@media (max-width: $breakpoint-xs) {
+  .todo-app {
+    &__header {
+      padding: $euiSizeS $euiSizeM;
+
+      h1 {
+        font-size: $euiFontSizeM;
+        
+        // Hide icon on very small screens
+        .euiIcon {
+          display: none;
+        }
+      }
+    }
+
+    &__nav {
+      padding: 0 $euiSizeS;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    &__nav-tab {
+      padding: $euiSizeS;
+      font-size: $euiFontSizeXS;
+      white-space: nowrap;
+      
+      // Hide shortcut indicators on mobile
+      .euiText {
+        display: none;
+      }
+      
+      // Smaller icons
+      .euiIcon {
+        width: 14px;
+        height: 14px;
+      }
+    }
+
+    &__content {
+      padding: $euiSizeS;
+    }
+  }
+
+  // Toolbar adjustments for mobile
+  .todo-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $euiSizeS;
+
+    &__search {
+      max-width: 100%;
+      order: 1;
+    }
+
+    &__filters {
+      order: 3;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: $euiSizeXS;
+      
+      // Allow horizontal scroll for filter buttons
+      .euiFilterGroup {
+        flex-wrap: nowrap;
+      }
+    }
+
+    &__actions {
+      order: 2;
+      margin-left: 0;
+      justify-content: flex-end;
+    }
+  }
+
+  // Kanban board - single column on very small screens
+  .kanban-board {
+    flex-direction: column;
+    min-height: auto;
+    gap: $euiSizeS;
+  }
+
+  .kanban-column {
+    min-width: 100%;
+    max-width: 100%;
+    
+    &__cards {
+      max-height: 300px;
+    }
+  }
+
+  // Cards - more compact
+  .todo-card {
+    padding: $euiSizeS;
+
+    &__header {
+      gap: $euiSizeXS;
+    }
+
+    &__title {
+      font-size: $euiFontSizeS;
+    }
+
+    &__meta {
+      flex-wrap: wrap;
+      gap: $euiSizeXS;
+    }
+  }
+
+  // Stats dashboard
+  .stats-dashboard {
+    &__metrics {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: $euiSizeS !important;
+    }
+
+    &__charts {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
+  // Detail panel - full width on mobile
+  .euiFlyout {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+// Small devices (landscape phones, tablets, 481px - 768px)
+@media (min-width: $breakpoint-xs + 1) and (max-width: $breakpoint-s) {
+  .todo-app {
+    &__header {
+      padding: $euiSizeS $euiSizeM;
+    }
+
+    &__nav {
+      padding: 0 $euiSizeM;
+      flex-wrap: wrap;
+    }
+
+    &__nav-tab {
+      padding: $euiSizeS $euiSizeS;
+      
+      // Hide shortcut indicators on tablets
+      .euiText {
+        display: none;
+      }
+    }
+
+    &__content {
+      padding: $euiSizeM;
+    }
+  }
+
+  .todo-toolbar {
+    &__search {
+      min-width: 180px;
+      max-width: 300px;
+    }
+
+    &__filters {
+      flex: 1;
+    }
+  }
+
+  // Kanban - 2 columns
+  .kanban-board {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $euiSizeS;
+  }
+
+  .kanban-column {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  // Stats dashboard
+  .stats-dashboard {
+    &__metrics {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    &__charts {
+      grid-template-columns: 1fr !important;
+    }
+  }
+}
+
+// Medium devices (tablets, small laptops, 769px - 992px)
+@media (min-width: $breakpoint-s + 1) and (max-width: $breakpoint-m) {
+  .kanban-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .kanban-column {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .stats-dashboard {
+    &__charts {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+  }
+}
+
+// ============================================
+// Touch-friendly enhancements
+// ============================================
+@media (hover: none) and (pointer: coarse) {
+  // Larger tap targets for touch devices
+  .todo-app__nav-tab {
+    min-height: 44px;
+    padding: $euiSizeM;
+  }
+
+  .todo-card {
+    // Slightly larger cards for easier tapping
+    padding: $euiSizeM;
+  }
+
+  .kanban-column__add-btn {
+    min-height: 44px;
+  }
+
+  // Better spacing for touch
+  .todo-toolbar__filters .euiFilterButton {
+    min-height: 40px;
+  }
+
+  // Hide hover-only elements
+  .todo-card__menu-btn {
+    opacity: 1;
+  }
+}
+
+// ============================================
+// Landscape orientation fixes
+// ============================================
+@media (max-height: 500px) and (orientation: landscape) {
+  .todo-app__content {
+    padding: $euiSizeS;
+  }
+
+  .kanban-board {
+    min-height: auto;
+  }
+
+  .kanban-column__cards {
+    max-height: 200px;
+  }
+
+  // Reduce modal/flyout height
+  .euiFlyout {
+    max-height: 100vh;
+  }
+}
+
+// ============================================
+// Print styles (optional)
+// ============================================
+@media print {
+  .todo-app {
+    &__nav,
+    &__header {
+      background: white !important;
+    }
+  }
+
+  .todo-toolbar {
+    display: none;
+  }
+
+  .kanban-board {
+    display: block;
+  }
+
+  .kanban-column {
+    page-break-inside: avoid;
+    margin-bottom: $euiSizeL;
+    max-width: 100%;
+  }
+
+  .todo-card {
+    page-break-inside: avoid;
+  }
+}
+

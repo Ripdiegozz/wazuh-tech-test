@@ -3,7 +3,6 @@ import { useState } from 'react';
 import {
   EuiBasicTable,
   EuiBasicTableColumn,
-  EuiIcon,
   EuiBadge,
   EuiSuperSelect,
   EuiText,
@@ -13,6 +12,7 @@ import {
   EuiConfirmModal,
   EuiFlexGroup,
   EuiFlexItem,
+  EuiEmptyPrompt,
 } from '@elastic/eui';
 import { TodoItem, TodoStatus } from '../../../common/types';
 import { formatDate } from '../../utils';
@@ -262,13 +262,17 @@ export const TableView: React.FC<TableViewProps> = ({
           onChange={onTableChange}
           tableLayout="fixed"
           noItemsMessage={
-            <div className="empty-state">
-              <EuiIcon type="document" size="xxl" className="empty-state__icon" />
-              <div className="empty-state__title">No work items found</div>
-              <div className="empty-state__description">
-                Create your first TODO item to get started with tracking your security compliance tasks.
-              </div>
-            </div>
+            <EuiEmptyPrompt
+              iconType="documents"
+              iconColor="subdued"
+              title={<h3>No work items yet</h3>}
+              body={
+                <p>
+                  Create your first TODO item to get started with tracking your security compliance tasks.
+                </p>
+              }
+              titleSize="s"
+            />
           }
         />
         
