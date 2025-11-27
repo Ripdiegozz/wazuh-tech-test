@@ -29,6 +29,20 @@
       background: $euiColorDarkShade;
     }
   }
+
+  &__load-more {
+    padding: $euiSizeM;
+    text-align: center;
+    margin-top: $euiSizeS;
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $euiSizeS;
+    padding: $euiSizeM;
+  }
 }
 
 // Kanban Column
@@ -107,6 +121,17 @@
       color: $euiColorPrimary;
       background: transparentize($euiColorPrimary, 0.95);
     }
+  }
+
+  &__load-more {
+    padding: $euiSizeS $euiSizeM;
+    text-align: center;
+    border-top: $euiBorderThin;
+    background: transparentize($euiColorLightShade, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $euiSizeXS;
   }
 
   // Column color variants using EUI colors

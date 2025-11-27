@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   EuiIcon,
@@ -23,7 +23,7 @@ import { CoreStart } from '../../../../../../src/core/public';
 import { NavigationPublicPluginStart } from '../../../../../../src/plugins/navigation/public';
 import { createTodoHooks, StoreActions } from '../../hooks';
 import { useTodoStore } from '../../stores';
-import { useKeyboardShortcuts, KEYBOARD_SHORTCUTS_HELP, SEARCH_INPUT_ID, useDebouncedSearch } from '../../hooks';
+import { useKeyboardShortcuts, KEYBOARD_SHORTCUTS_HELP, SEARCH_INPUT_ID, useDebouncedSearch, useUrlFilters } from '../../hooks';
 import { useTodoTour } from './shared';
 import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
 import { KanbanBoard } from './kanban-board';
@@ -67,12 +67,32 @@ const PRIORITY_OPTIONS = [
   { value: TodoPriority.CRITICAL, inputDisplay: 'Critical' },
 ];
 
+// Helper to format archived count badge
+const formatBadgeCount = (count: number): string => {
+  return count > 99 ? '99+' : String(count);
+};
+
 const TodoAppContent: React.FC<TodoAppProps> = ({
   notifications,
   http,
 }) => {
+  // URL sync for filters
+  const { initialFilters, syncToUrl } = useUrlFilters();
+  
   const [isShortcutsOpen, setIsShortcutsOpen] = React.useState(false);
-  const [priorityFilter, setPriorityFilter] = React.useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = React.useState<string>(initialFilters.priority || 'all');
+  
+  // Pagination & Sorting state for Table View
+  const [tablePageIndex, setTablePageIndex] = useState(0);
+  const [tablePageSize, setTablePageSize] = useState(25);
+  const [tableSortField, setTableSortField] = useState('updatedAt');
+  const [tableSortDirection, setTableSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Pagination & Sorting state for Archived View
+  const [archivedPageIndex, setArchivedPageIndex] = useState(0);
+  const [archivedPageSize, setArchivedPageSize] = useState(25);
+  const [archivedSortField, setArchivedSortField] = useState('archivedAt');
+  const [archivedSortDirection, setArchivedSortDirection] = useState<'asc' | 'desc'>('desc');
   
   // Tour state
   const { tourSteps, actions: tourActions, isTourActive } = useTodoTour();
@@ -92,7 +112,6 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     detailPanelTodo,
     openDetailPanel,
     closeDetailPanel,
-    getTodosByStatus,
     archivedTodos,
     setTodos,
     setArchivedTodos,
@@ -135,6 +154,8 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   const { 
     useTodos, 
     useArchivedTodos, 
+    useArchivedCount,
+    useInfiniteKanban,
     useStatistics,
     useCreateTodo, 
     useUpdateTodo, 
@@ -151,13 +172,38 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   // Empty string or whitespace = undefined (load all without query filter)
   const searchQuery = debouncedQuery.trim() || undefined;
   
+  // Fetch todos with pagination and sorting (server-side) - for Table View
   const { data: todosData, isLoading: todosLoading } = useTodos({
     query: searchQuery,
+    status: filters.status.length > 0 ? filters.status : undefined,
     priority: priorityFilter !== 'all' ? [priorityFilter as TodoPriority] : undefined,
     assignee: filters.assignee || undefined,
+    page: tablePageIndex + 1, // API uses 1-based pages
+    size: tablePageSize,
+    sortField: tableSortField,
+    sortOrder: tableSortDirection,
+  });
+
+  // Infinite query for Kanban Board - fetches all data progressively
+  const {
+    data: kanbanInfiniteData,
+    fetchNextPage: fetchMoreKanban,
+    hasNextPage: hasMoreKanbanData,
+    isFetchingNextPage: isFetchingMoreKanban,
+    isLoading: kanbanLoading,
+  } = useInfiniteKanban(50);
+  
+  // Fetch archived todos with pagination and sorting (server-side)
+  const { data: archivedData, isLoading: archivedLoading } = useArchivedTodos({
+    page: archivedPageIndex + 1,
+    size: archivedPageSize,
+    sortField: archivedSortField,
+    sortOrder: archivedSortDirection,
   });
   
-  const { data: archivedData } = useArchivedTodos();
+  // Get archived count for badge
+  const { data: archivedCount = 0 } = useArchivedCount();
+  
   const { data: statisticsData, isLoading: statsLoading } = useStatistics();
   
   const createMutation = useCreateTodo();
@@ -169,6 +215,58 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   const bulkArchiveMutation = useBulkArchive();
   const bulkRestoreMutation = useBulkRestore();
   const bulkDeleteMutation = useBulkDelete();
+
+  // Pagination handlers
+  const handleTablePaginationChange = useCallback((newPageIndex: number, newPageSize: number) => {
+    setTablePageIndex(newPageIndex);
+    setTablePageSize(newPageSize);
+  }, []);
+
+  const handleArchivedPaginationChange = useCallback((page: number, size: number) => {
+    setArchivedPageIndex(page);
+    setArchivedPageSize(size);
+  }, []);
+
+  // Sorting handlers - reset to page 0 when sort changes (server-side sorting)
+  const handleTableSortChange = useCallback((field: string, direction: 'asc' | 'desc') => {
+    setTableSortField(field);
+    setTableSortDirection(direction);
+    setTablePageIndex(0); // Reset to first page on sort change
+  }, []);
+
+  const handleArchivedSortChange = useCallback((field: string, direction: 'asc' | 'desc') => {
+    setArchivedSortField(field);
+    setArchivedSortDirection(direction);
+    setArchivedPageIndex(0); // Reset to first page on sort change
+  }, []);
+
+  // Reset pagination when filters change
+  React.useEffect(() => {
+    setTablePageIndex(0);
+  }, [searchQuery, priorityFilter, filters.status]);
+
+  // Initialize from URL on mount
+  React.useEffect(() => {
+    if (initialFilters.view) {
+      setView(initialFilters.view as any);
+    }
+    if (initialFilters.query) {
+      setFilters({ query: initialFilters.query });
+    }
+    if (initialFilters.status && initialFilters.status.length > 0) {
+      setFilters({ status: initialFilters.status });
+    }
+  }, []); // Run only once on mount
+
+  // Sync filters to URL when they change
+  React.useEffect(() => {
+    syncToUrl({
+      view: currentView,
+      query: filters.query || undefined,
+      status: filters.status.length > 0 ? filters.status : undefined,
+      priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+    });
+  }, [currentView, filters.query, filters.status, priorityFilter, syncToUrl]);
 
   // Handlers
   const handleSaveTodo = async (data: any) => {
@@ -267,14 +365,59 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     }
   };
 
-  // Get todos grouped by status, then apply client-side status filtering
-  const allTodosByStatus = getTodosByStatus();
+  // Flatten all pages from infinite query into a single array for Kanban
+  const allKanbanTodos = useMemo(() => {
+    if (!kanbanInfiniteData?.pages) return [];
+    return kanbanInfiniteData.pages.flatMap((page) => page.items);
+  }, [kanbanInfiniteData]);
+
+  // Get total count for Kanban (from first page)
+  const kanbanTotalCount = kanbanInfiniteData?.pages?.[0]?.total || 0;
   
-  // Apply client-side status filter if any status filters are selected
+  // Apply CLIENT-SIDE filters to Kanban data
+  const filteredKanbanTodos = useMemo(() => {
+    return allKanbanTodos.filter((todo) => {
+      // Search filter (title & description) - client-side
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const titleMatch = todo.title.toLowerCase().includes(query);
+        const descMatch = todo.description?.toLowerCase().includes(query) || false;
+        if (!titleMatch && !descMatch) return false;
+      }
+      
+      // Priority filter - client-side
+      if (priorityFilter !== 'all' && todo.priority !== priorityFilter) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [allKanbanTodos, searchQuery, priorityFilter]);
+
+  // Group filtered Kanban todos by status
+  const kanbanTodosByStatus = useMemo(() => {
+    const grouped: Record<TodoStatus, TodoItem[]> = {
+      [TodoStatus.PLANNED]: [],
+      [TodoStatus.IN_PROGRESS]: [],
+      [TodoStatus.BLOCKED]: [],
+      [TodoStatus.COMPLETED_SUCCESS]: [],
+      [TodoStatus.COMPLETED_ERROR]: [],
+    };
+    
+    filteredKanbanTodos.forEach((todo) => {
+      if (grouped[todo.status]) {
+        grouped[todo.status].push(todo);
+      }
+    });
+    
+    return grouped;
+  }, [filteredKanbanTodos]);
+  
+  // Apply status filter to Kanban (hide empty columns if filtered)
   const todosByStatus = useMemo(() => {
     // If no status filters selected, show all statuses
     if (filters.status.length === 0) {
-      return allTodosByStatus;
+      return kanbanTodosByStatus;
     }
     
     // Otherwise, only show the selected statuses (empty arrays for unselected)
@@ -287,22 +430,38 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     };
     
     filters.status.forEach((status) => {
-      filtered[status] = allTodosByStatus[status] || [];
+      filtered[status] = kanbanTodosByStatus[status] || [];
     });
     
     return filtered;
-  }, [allTodosByStatus, filters.status]);
+  }, [kanbanTodosByStatus, filters.status]);
 
-  // Get flat list of filtered todos for table view
-  const filteredTodos = useMemo(() => {
-    const todos = todosData?.items || [];
-    if (filters.status.length === 0) {
-      return todos;
-    }
-    return todos.filter((todo) => filters.status.includes(todo.status));
-  }, [todosData?.items, filters.status]);
+  // Count todos by status (unfiltered) for filter badges
+  const statusCounts = useMemo(() => {
+    const counts: Record<TodoStatus, number> = {
+      [TodoStatus.PLANNED]: 0,
+      [TodoStatus.IN_PROGRESS]: 0,
+      [TodoStatus.BLOCKED]: 0,
+      [TodoStatus.COMPLETED_SUCCESS]: 0,
+      [TodoStatus.COMPLETED_ERROR]: 0,
+    };
+    
+    allKanbanTodos.forEach((todo) => {
+      if (counts[todo.status] !== undefined) {
+        counts[todo.status]++;
+      }
+    });
+    
+    return counts;
+  }, [allKanbanTodos]);
 
-  const archivedTodosList = archivedData?.items || archivedTodos || [];
+  // Get flat list of filtered todos for table view (already paginated from server)
+  const tableItems = todosData?.items || [];
+  const tableTotalItems = todosData?.total || 0;
+
+  // Archived todos (already paginated from server)
+  const archivedItems = archivedData?.items || [];
+  const archivedTotalItems = archivedData?.total || 0;
 
   return (
     <div className="todo-app">
@@ -315,12 +474,12 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
           </EuiButton>
         }
       >
-        <header className="todo-app__header">
-          <h1>
-            <EuiIcon type="listAdd" size="l" />
-            Security TODO Manager
-          </h1>
-        </header>
+      <header className="todo-app__header">
+        <h1>
+          <EuiIcon type="listAdd" size="l" />
+          Security TODO Manager
+        </h1>
+      </header>
       </EuiTourStep>
 
       {/* Navigation Tabs */}
@@ -332,7 +491,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
           </EuiButton>
         }
       >
-        <nav className="todo-app__nav">
+      <nav className="todo-app__nav">
         <button
           className={`todo-app__nav-tab ${currentView === 'board' ? 'todo-app__nav-tab--active' : ''}`}
           onClick={() => setView('board')}
@@ -356,9 +515,9 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
           <EuiIcon type="folderClosed" />
           Archived
           <EuiText size="xs" color="subdued">[3]</EuiText>
-          {archivedTodosList.length > 0 && (
+          {archivedCount > 0 && (
             <span className="todo-app__nav-badge">
-              {archivedTodosList.length}
+              {formatBadgeCount(archivedCount)}
             </span>
           )}
         </button>
@@ -439,16 +598,16 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 </EuiButton>
               }
             >
-              <div className="todo-toolbar__search">
-                <EuiFieldSearch
-                  id={SEARCH_INPUT_ID}
-                  placeholder="Search work... [/]"
-                  value={filters.query}
-                  onChange={(e) => setFilters({ query: e.target.value })}
-                  isClearable
-                  fullWidth
-                />
-              </div>
+            <div className="todo-toolbar__search">
+              <EuiFieldSearch
+                id={SEARCH_INPUT_ID}
+                placeholder="Search work... [/]"
+                value={filters.query}
+                onChange={(e) => setFilters({ query: e.target.value })}
+                isClearable
+                fullWidth
+              />
+            </div>
             </EuiTourStep>
 
             <div className="todo-toolbar__filters">
@@ -458,7 +617,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                     key={status}
                     hasActiveFilters={filters.status.includes(status as TodoStatus)}
                     onClick={() => toggleStatusFilter(status as TodoStatus)}
-                    numFilters={allTodosByStatus[status as TodoStatus]?.length || 0}
+                    numFilters={statusCounts[status as TodoStatus] || 0}
                   >
                     {label}
                   </EuiFilterButton>
@@ -480,20 +639,20 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                   </EuiButton>
                 }
               >
-                <EuiButton
-                  fill
-                  iconType="plus"
-                  onClick={openCreateModal}
-                >
-                  Create
-                </EuiButton>
+              <EuiButton
+                fill
+                iconType="plus"
+                onClick={openCreateModal}
+              >
+                Create
+              </EuiButton>
               </EuiTourStep>
             </div>
           </div>
         )}
 
         {/* View Content */}
-        {todosLoading ? (
+        {((currentView === 'board' && kanbanLoading) || (currentView === 'table' && todosLoading)) ? (
           <EuiFlexGroup justifyContent="center" alignItems="center">
             <EuiFlexItem grow={false}>
               <EuiLoadingSpinner size="xl" />
@@ -510,21 +669,34 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                   </EuiButton>
                 }
               >
-                <KanbanBoard
-                  todosByStatus={todosByStatus}
-                  statusLabels={STATUS_LABELS}
-                  onEditTodo={openDetailPanel}
-                  onStatusChange={handleStatusChange}
-                  onArchiveTodo={handleArchiveTodo}
-                  onDeleteTodo={handleDeleteTodo}
-                  onCreateInStatus={openCreateModal}
-                  isPending={isPending}
-                />
+              <KanbanBoard
+                todosByStatus={todosByStatus}
+                statusLabels={STATUS_LABELS}
+                onEditTodo={openDetailPanel}
+                onStatusChange={handleStatusChange}
+                onArchiveTodo={handleArchiveTodo}
+                onDeleteTodo={handleDeleteTodo}
+                onCreateInStatus={openCreateModal}
+                isPending={isPending}
+                hasMore={hasMoreKanbanData || false}
+                isLoadingMore={isFetchingMoreKanban}
+                onLoadMore={fetchMoreKanban}
+                totalCount={kanbanTotalCount}
+                loadedCount={allKanbanTodos.length}
+              />
               </EuiTourStep>
             )}
             {currentView === 'table' && (
               <TableView
-                todos={filteredTodos}
+                todos={tableItems}
+                totalItems={tableTotalItems}
+                pageIndex={tablePageIndex}
+                pageSize={tablePageSize}
+                sortField={tableSortField}
+                sortDirection={tableSortDirection}
+                isLoading={todosLoading}
+                onPaginationChange={handleTablePaginationChange}
+                onSortChange={handleTableSortChange}
                 onEditTodo={openDetailPanel}
                 onDeleteTodo={handleDeleteTodo}
                 onArchiveTodo={handleArchiveTodo}
@@ -536,7 +708,15 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
             )}
             {currentView === 'archived' && (
               <ArchivedView
-                todos={archivedTodosList}
+                todos={archivedItems}
+                totalItems={archivedTotalItems}
+                pageIndex={archivedPageIndex}
+                pageSize={archivedPageSize}
+                sortField={archivedSortField}
+                sortDirection={archivedSortDirection}
+                isLoading={archivedLoading}
+                onPaginationChange={handleArchivedPaginationChange}
+                onSortChange={handleArchivedSortChange}
                 onRestoreTodo={handleRestoreTodo}
                 onDeleteTodo={handleDeleteTodo}
                 onBulkRestore={handleBulkRestore}
@@ -588,4 +768,3 @@ export const TodoApp: React.FC<TodoAppProps> = (props) => {
     </QueryClientProvider>
   );
 };
-

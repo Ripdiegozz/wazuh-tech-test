@@ -13,6 +13,8 @@ import {
   EuiFlexGroup,
   EuiFlexItem,
   EuiEmptyPrompt,
+  Criteria,
+  Pagination,
 } from '@elastic/eui';
 import { TodoItem, TodoStatus } from '../../../common/types';
 import { formatDate } from '../../utils';
@@ -20,6 +22,14 @@ import { PriorityCell, AssigneeCell, WorkCell } from './shared';
 
 interface TableViewProps {
   todos: TodoItem[];
+  totalItems: number;
+  pageIndex: number;
+  pageSize: number;
+  sortField: string;
+  sortDirection: 'asc' | 'desc';
+  isLoading?: boolean;
+  onPaginationChange: (page: number, size: number) => void;
+  onSortChange: (field: string, direction: 'asc' | 'desc') => void;
   onEditTodo: (todo: TodoItem) => void;
   onDeleteTodo: (id: string) => void;
   onArchiveTodo: (id: string) => void;
@@ -37,8 +47,18 @@ const STATUS_OPTIONS = [
   { value: TodoStatus.COMPLETED_ERROR, inputDisplay: <EuiBadge color="danger">Error</EuiBadge> },
 ];
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+
 export const TableView: React.FC<TableViewProps> = ({
   todos,
+  totalItems,
+  pageIndex,
+  pageSize,
+  sortField,
+  sortDirection,
+  isLoading = false,
+  onPaginationChange,
+  onSortChange,
   onEditTodo,
   onDeleteTodo,
   onArchiveTodo,
@@ -48,11 +68,9 @@ export const TableView: React.FC<TableViewProps> = ({
   isPending = () => false,
 }) => {
   const [selectedItems, setSelectedItems] = useState<TodoItem[]>([]);
-  const [sortField, setSortField] = useState<keyof TodoItem>('updatedAt');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Clear selection when todos change (e.g., after bulk operation)
+  // Clear selection when todos change
   React.useEffect(() => {
     setSelectedItems((prev) => prev.filter((item) => todos.some((t) => t.id === item.id)));
   }, [todos]);
@@ -185,30 +203,37 @@ export const TableView: React.FC<TableViewProps> = ({
     },
   ];
 
-  const onTableChange = ({ sort }: any) => {
-    if (sort) {
-      setSortField(sort.field);
-      setSortDirection(sort.direction);
+  const handleTableChange = (criteria: Criteria<TodoItem>) => {
+    const { page: paginationChange, sort: sortChange } = criteria;
+    
+    // Handle pagination changes
+    if (paginationChange) {
+      const { index: newPageIndex, size: newPageSize } = paginationChange;
+      onPaginationChange(newPageIndex, newPageSize);
+    }
+    
+    // Handle sort changes (only if actually different)
+    if (sortChange) {
+      const newSortField = String(sortChange.field);
+      const newSortDirection = sortChange.direction;
+      const sortHasChanged = newSortField !== sortField || newSortDirection !== sortDirection;
+      
+      if (sortHasChanged) {
+        onSortChange(newSortField, newSortDirection);
+      }
     }
   };
 
-  const sortedTodos = React.useMemo(() => {
-    return [...todos].sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-      
-      if (aValue === undefined || aValue === null) return 1;
-      if (bValue === undefined || bValue === null) return -1;
-      
-      const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-  }, [todos, sortField, sortDirection]);
+  const pagination: Pagination = {
+    pageIndex,
+    pageSize,
+    totalItemCount: totalItems,
+    pageSizeOptions: PAGE_SIZE_OPTIONS,
+  };
 
   return (
     <>
       <div className="todo-table">
-        {/* Bulk Actions Bar */}
         {todos.length > 0 && (
           <>
             <EuiFlexGroup alignItems="center" gutterSize="m" className="todo-table__bulk-actions">
@@ -218,27 +243,18 @@ export const TableView: React.FC<TableViewProps> = ({
                   checked={selectedItems.length === todos.length && todos.length > 0}
                   indeterminate={selectedItems.length > 0 && selectedItems.length < todos.length}
                   onChange={handleSelectAll}
-                  label={selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all'}
+                  label={selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all on page'}
                 />
               </EuiFlexItem>
               {selectedItems.length > 0 && (
                 <>
                   <EuiFlexItem grow={false}>
-                    <EuiButton
-                      size="s"
-                      iconType="folderClosed"
-                      onClick={handleBulkArchive}
-                    >
+                    <EuiButton size="s" iconType="folderClosed" onClick={handleBulkArchive}>
                       Archive ({selectedItems.length})
                     </EuiButton>
                   </EuiFlexItem>
                   <EuiFlexItem grow={false}>
-                    <EuiButton
-                      size="s"
-                      iconType="trash"
-                      color="danger"
-                      onClick={() => setShowDeleteConfirm(true)}
-                    >
+                    <EuiButton size="s" iconType="trash" color="danger" onClick={() => setShowDeleteConfirm(true)}>
                       Delete ({selectedItems.length})
                     </EuiButton>
                   </EuiFlexItem>
@@ -250,38 +266,31 @@ export const TableView: React.FC<TableViewProps> = ({
         )}
 
         <EuiBasicTable
-          items={sortedTodos}
+          items={todos}
           columns={columns}
           rowHeader="title"
           sorting={{
             sort: {
-              field: sortField,
+              field: sortField as keyof TodoItem,
               direction: sortDirection,
             },
           }}
-          onChange={onTableChange}
+          pagination={pagination}
+          onChange={handleTableChange}
           tableLayout="fixed"
+          loading={isLoading}
           noItemsMessage={
             <EuiEmptyPrompt
               iconType="documents"
               iconColor="subdued"
               title={<h3>No work items yet</h3>}
-              body={
-                <p>
-                  Create your first TODO item to get started with tracking your security compliance tasks.
-                </p>
-              }
+              body={<p>Create your first TODO item to get started with tracking your security compliance tasks.</p>}
               titleSize="s"
             />
           }
         />
-        
-        <div className="todo-table__footer">
-          {todos.length} of {todos.length} items
-        </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <EuiConfirmModal
           title={`Delete ${selectedItems.length} item${selectedItems.length > 1 ? 's' : ''}?`}
@@ -291,12 +300,9 @@ export const TableView: React.FC<TableViewProps> = ({
           confirmButtonText="Delete"
           buttonColor="danger"
         >
-          <p>
-            This action cannot be undone. {selectedItems.length > 1 ? 'These items' : 'This item'} will be permanently deleted.
-          </p>
+          <p>This action cannot be undone. {selectedItems.length > 1 ? 'These items' : 'This item'} will be permanently deleted.</p>
         </EuiConfirmModal>
       )}
     </>
   );
 };
-

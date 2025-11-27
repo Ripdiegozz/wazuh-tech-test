@@ -13,6 +13,8 @@ import {
   EuiCheckbox,
   EuiSpacer,
   EuiText,
+  Criteria,
+  Pagination,
 } from '@elastic/eui';
 import { TodoItem, TodoStatus } from '../../../common/types';
 import { formatDate } from '../../utils';
@@ -20,6 +22,14 @@ import { PriorityCell, AssigneeCell, WorkCell } from './shared';
 
 interface ArchivedViewProps {
   todos: TodoItem[];
+  totalItems: number;
+  pageIndex: number;
+  pageSize: number;
+  sortField: string;
+  sortDirection: 'asc' | 'desc';
+  isLoading?: boolean;
+  onPaginationChange: (page: number, size: number) => void;
+  onSortChange: (field: string, direction: 'asc' | 'desc') => void;
   onRestoreTodo: (id: string) => void;
   onDeleteTodo: (id: string) => void;
   onBulkRestore?: (ids: string[]) => void;
@@ -43,8 +53,18 @@ const STATUS_COLORS: Record<TodoStatus, string> = {
   [TodoStatus.COMPLETED_ERROR]: 'danger',
 };
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+
 export const ArchivedView: React.FC<ArchivedViewProps> = ({
   todos,
+  totalItems,
+  pageIndex,
+  pageSize,
+  sortField,
+  sortDirection,
+  isLoading = false,
+  onPaginationChange,
+  onSortChange,
   onRestoreTodo,
   onDeleteTodo,
   onBulkRestore,
@@ -55,7 +75,7 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
   const [selectedItems, setSelectedItems] = useState<TodoItem[]>([]);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
-  // Clear selection when todos change (e.g., after bulk operation)
+  // Clear selection when todos change
   React.useEffect(() => {
     setSelectedItems((prev) => prev.filter((item) => todos.some((t) => t.id === item.id)));
   }, [todos]);
@@ -80,6 +100,27 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
       setSelectedItems([]);
     } else {
       setSelectedItems([...todos]);
+    }
+  };
+
+  const handleTableChange = (criteria: Criteria<TodoItem>) => {
+    const { page: paginationChange, sort: sortChange } = criteria;
+    
+    // Handle pagination changes
+    if (paginationChange) {
+      const { index: newPageIndex, size: newPageSize } = paginationChange;
+      onPaginationChange(newPageIndex, newPageSize);
+    }
+    
+    // Handle sort changes (only if actually different)
+    if (sortChange) {
+      const newSortField = String(sortChange.field);
+      const newSortDirection = sortChange.direction;
+      const sortHasChanged = newSortField !== sortField || newSortDirection !== sortDirection;
+      
+      if (sortHasChanged) {
+        onSortChange(newSortField, newSortDirection);
+      }
     }
   };
 
@@ -109,12 +150,14 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
       field: 'priority',
       name: 'Priority',
       width: '100px',
+      sortable: true,
       render: (priority) => <PriorityCell priority={priority} />,
     },
     {
       field: 'status',
       name: 'Status',
       width: '150px',
+      sortable: true,
       render: (status: TodoStatus) => (
         <EuiBadge color={STATUS_COLORS[status]}>
           {STATUS_LABELS[status]}
@@ -125,6 +168,7 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
       field: 'archivedAt',
       name: 'Archived',
       width: '180px',
+      sortable: true,
       render: (date?: string) => (
         <EuiText size="s" color="subdued">
           {formatDate(date)}
@@ -172,7 +216,14 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
     },
   ];
 
-  if (todos.length === 0) {
+  const pagination: Pagination = {
+    pageIndex,
+    pageSize,
+    totalItemCount: totalItems,
+    pageSizeOptions: PAGE_SIZE_OPTIONS,
+  };
+
+  if (totalItems === 0 && !isLoading) {
     return (
       <div className="archived-view__empty">
         <EuiEmptyPrompt
@@ -198,7 +249,6 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
           <h3>Archived work items</h3>
         </div>
 
-        {/* Bulk Actions Bar */}
         <EuiFlexGroup alignItems="center" gutterSize="m" className="todo-table__bulk-actions">
           <EuiFlexItem grow={false}>
             <EuiCheckbox
@@ -206,27 +256,18 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
               checked={selectedItems.length === todos.length && todos.length > 0}
               indeterminate={selectedItems.length > 0 && selectedItems.length < todos.length}
               onChange={handleSelectAll}
-              label={selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all'}
+              label={selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all on page'}
             />
           </EuiFlexItem>
           {selectedItems.length > 0 && (
             <>
               <EuiFlexItem grow={false}>
-                <EuiButton
-                  size="s"
-                  iconType="refresh"
-                  onClick={handleBulkRestore}
-                >
+                <EuiButton size="s" iconType="refresh" onClick={handleBulkRestore}>
                   Restore ({selectedItems.length})
                 </EuiButton>
               </EuiFlexItem>
               <EuiFlexItem grow={false}>
-                <EuiButton
-                  size="s"
-                  iconType="trash"
-                  color="danger"
-                  onClick={() => setShowBulkDeleteConfirm(true)}
-                >
+                <EuiButton size="s" iconType="trash" color="danger" onClick={() => setShowBulkDeleteConfirm(true)}>
                   Delete ({selectedItems.length})
                 </EuiButton>
               </EuiFlexItem>
@@ -240,14 +281,18 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
           columns={columns}
           rowHeader="title"
           tableLayout="fixed"
+          loading={isLoading}
+          sorting={{
+            sort: {
+              field: sortField as keyof TodoItem,
+              direction: sortDirection,
+            },
+          }}
+          pagination={pagination}
+          onChange={handleTableChange}
         />
-        
-        <div className="todo-table__footer">
-          {todos.length} archived item{todos.length !== 1 ? 's' : ''}
-        </div>
       </div>
 
-      {/* Single Item Delete Confirmation */}
       {itemToDelete && (
         <EuiConfirmModal
           title="Delete archived item?"
@@ -260,13 +305,10 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
           confirmButtonText="Delete"
           buttonColor="danger"
         >
-          <p>
-            This action cannot be undone. The work item will be permanently deleted.
-          </p>
+          <p>This action cannot be undone. The work item will be permanently deleted.</p>
         </EuiConfirmModal>
       )}
 
-      {/* Bulk Delete Confirmation */}
       {showBulkDeleteConfirm && (
         <EuiConfirmModal
           title={`Delete ${selectedItems.length} archived item${selectedItems.length > 1 ? 's' : ''}?`}
@@ -276,12 +318,9 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
           confirmButtonText="Delete"
           buttonColor="danger"
         >
-          <p>
-            This action cannot be undone. {selectedItems.length > 1 ? 'These items' : 'This item'} will be permanently deleted.
-          </p>
+          <p>This action cannot be undone. {selectedItems.length > 1 ? 'These items' : 'This item'} will be permanently deleted.</p>
         </EuiConfirmModal>
       )}
     </>
   );
 };
-
