@@ -1,5 +1,18 @@
 import '@testing-library/jest-dom';
 
+// Mock crypto.getRandomValues for UUID generation (used by EUI)
+Object.defineProperty(global, 'crypto', {
+  value: {
+    getRandomValues: (arr: Uint8Array) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256);
+      }
+      return arr;
+    },
+    randomUUID: () => 'test-uuid-' + Math.random().toString(36).substring(2, 9),
+  },
+});
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -31,13 +44,6 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
 
 // Mock scrollTo
 window.scrollTo = jest.fn();
-
-// Mock crypto.randomUUID
-Object.defineProperty(global, 'crypto', {
-  value: {
-    randomUUID: () => 'test-uuid-' + Math.random().toString(36).substr(2, 9),
-  },
-});
 
 // Suppress console errors/warnings during tests
 const originalError = console.error;
