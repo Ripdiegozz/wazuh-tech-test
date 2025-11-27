@@ -135,7 +135,10 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     useDeleteTodo, 
     useArchiveTodo, 
     useRestoreTodo, 
-    useUpdateStatus 
+    useUpdateStatus,
+    useBulkArchive,
+    useBulkRestore,
+    useBulkDelete,
   } = todoHooks;
   
   // Build search params with debounced query
@@ -157,6 +160,9 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   const archiveMutation = useArchiveTodo();
   const restoreMutation = useRestoreTodo();
   const updateStatusMutation = useUpdateStatus();
+  const bulkArchiveMutation = useBulkArchive();
+  const bulkRestoreMutation = useBulkRestore();
+  const bulkDeleteMutation = useBulkDelete();
 
   // Handlers
   const handleSaveTodo = async (data: any) => {
@@ -210,6 +216,43 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   const handleStatusChange = async (id: string, status: TodoStatus) => {
     try {
       await updateStatusMutation.mutateAsync({ id, status });
+    } catch (error) {
+      notifications.toasts.addDanger({
+        title: 'Error',
+        text: (error as Error).message,
+      });
+    }
+  };
+
+  // Bulk operation handlers
+  const handleBulkArchive = async (ids: string[]) => {
+    try {
+      await bulkArchiveMutation.mutateAsync(ids);
+      notifications.toasts.addSuccess(`${ids.length} item${ids.length > 1 ? 's' : ''} archived`);
+    } catch (error) {
+      notifications.toasts.addDanger({
+        title: 'Error',
+        text: (error as Error).message,
+      });
+    }
+  };
+
+  const handleBulkRestore = async (ids: string[]) => {
+    try {
+      await bulkRestoreMutation.mutateAsync(ids);
+      notifications.toasts.addSuccess(`${ids.length} item${ids.length > 1 ? 's' : ''} restored`);
+    } catch (error) {
+      notifications.toasts.addDanger({
+        title: 'Error',
+        text: (error as Error).message,
+      });
+    }
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    try {
+      await bulkDeleteMutation.mutateAsync(ids);
+      notifications.toasts.addSuccess(`${ids.length} item${ids.length > 1 ? 's' : ''} deleted`);
     } catch (error) {
       notifications.toasts.addDanger({
         title: 'Error',
@@ -414,6 +457,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 onEditTodo={openDetailPanel}
                 onStatusChange={handleStatusChange}
                 onArchiveTodo={handleArchiveTodo}
+                onDeleteTodo={handleDeleteTodo}
                 onCreateInStatus={openCreateModal}
                 isPending={isPending}
               />
@@ -425,6 +469,8 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 onDeleteTodo={handleDeleteTodo}
                 onArchiveTodo={handleArchiveTodo}
                 onStatusChange={handleStatusChange}
+                onBulkArchive={handleBulkArchive}
+                onBulkDelete={handleBulkDelete}
                 isPending={isPending}
               />
             )}
@@ -433,6 +479,8 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 todos={archivedTodosList}
                 onRestoreTodo={handleRestoreTodo}
                 onDeleteTodo={handleDeleteTodo}
+                onBulkRestore={handleBulkRestore}
+                onBulkDelete={handleBulkDelete}
                 isPending={isPending}
               />
             )}

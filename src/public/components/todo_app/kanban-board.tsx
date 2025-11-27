@@ -15,6 +15,7 @@ interface KanbanBoardProps {
   onEditTodo: (todo: TodoItem) => void;
   onStatusChange: (id: string, status: TodoStatus) => void;
   onArchiveTodo: (id: string) => void;
+  onDeleteTodo: (id: string) => void;
   onCreateInStatus: () => void;
   isPending?: (id: string) => boolean;
 }
@@ -41,6 +42,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onEditTodo,
   onStatusChange,
   onArchiveTodo,
+  onDeleteTodo,
   onCreateInStatus,
   isPending = () => false,
 }) => {
@@ -108,6 +110,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         todo={todo}
                         onEdit={() => onEditTodo(todo)}
                         onArchive={() => onArchiveTodo(todo.id)}
+                        onDelete={() => onDeleteTodo(todo.id)}
                         isPending={isPending(todo.id)}
                       />
                     </div>

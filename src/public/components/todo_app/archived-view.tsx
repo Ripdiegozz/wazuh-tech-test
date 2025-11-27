@@ -13,6 +13,9 @@ import {
   EuiEmptyPrompt,
   EuiConfirmModal,
   EuiLoadingSpinner,
+  EuiButton,
+  EuiCheckbox,
+  EuiSpacer,
 } from '@elastic/eui';
 import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
 
@@ -20,6 +23,8 @@ interface ArchivedViewProps {
   todos: TodoItem[];
   onRestoreTodo: (id: string) => void;
   onDeleteTodo: (id: string) => void;
+  onBulkRestore?: (ids: string[]) => void;
+  onBulkDelete?: (ids: string[]) => void;
   isPending?: (id: string) => boolean;
 }
 
@@ -50,9 +55,41 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
   todos,
   onRestoreTodo,
   onDeleteTodo,
+  onBulkRestore,
+  onBulkDelete,
   isPending = () => false,
 }) => {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<TodoItem[]>([]);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+  // Clear selection when todos change (e.g., after bulk operation)
+  React.useEffect(() => {
+    setSelectedItems((prev) => prev.filter((item) => todos.some((t) => t.id === item.id)));
+  }, [todos]);
+
+  const handleBulkRestore = () => {
+    if (onBulkRestore && selectedItems.length > 0) {
+      onBulkRestore(selectedItems.map((item) => item.id));
+      setSelectedItems([]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (onBulkDelete && selectedItems.length > 0) {
+      onBulkDelete(selectedItems.map((item) => item.id));
+      setSelectedItems([]);
+      setShowBulkDeleteConfirm(false);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.length === todos.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems([...todos]);
+    }
+  };
 
   const formatId = (id: string): string => {
     return `TODO-${id.slice(0, 4).toUpperCase()}`;
@@ -92,8 +129,19 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
             {pending ? (
               <EuiLoadingSpinner size="s" />
             ) : (
-              <EuiIcon type="folderClosed" color="subdued" />
+              <EuiCheckbox
+                id={`archived-checkbox-${id}`}
+                checked={selectedItems.some((item) => item.id === id)}
+                onChange={() => {
+                  setSelectedItems((prev) =>
+                    prev.some((item) => item.id === id)
+                      ? prev.filter((item) => item.id !== id)
+                      : [...prev, todo]
+                  );
+                }}
+              />
             )}
+            <EuiIcon type="folderClosed" color="subdued" />
             <span>
               <span className="todo-table__work-id">{formatId(id)}</span>
               <span className="todo-table__work-title">{todo.title}</span>
@@ -220,6 +268,43 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
           <h3>Archived work items</h3>
         </div>
 
+        {/* Bulk Actions Bar */}
+        <EuiFlexGroup alignItems="center" gutterSize="m" className="todo-table__bulk-actions">
+          <EuiFlexItem grow={false}>
+            <EuiCheckbox
+              id="archived-select-all-checkbox"
+              checked={selectedItems.length === todos.length && todos.length > 0}
+              indeterminate={selectedItems.length > 0 && selectedItems.length < todos.length}
+              onChange={handleSelectAll}
+              label={selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all'}
+            />
+          </EuiFlexItem>
+          {selectedItems.length > 0 && (
+            <>
+              <EuiFlexItem grow={false}>
+                <EuiButton
+                  size="s"
+                  iconType="refresh"
+                  onClick={handleBulkRestore}
+                >
+                  Restore ({selectedItems.length})
+                </EuiButton>
+              </EuiFlexItem>
+              <EuiFlexItem grow={false}>
+                <EuiButton
+                  size="s"
+                  iconType="trash"
+                  color="danger"
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                >
+                  Delete ({selectedItems.length})
+                </EuiButton>
+              </EuiFlexItem>
+            </>
+          )}
+        </EuiFlexGroup>
+        <EuiSpacer size="s" />
+
         <EuiBasicTable
           items={todos}
           columns={columns}
@@ -232,6 +317,7 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
         </div>
       </div>
 
+      {/* Single Item Delete Confirmation */}
       {itemToDelete && (
         <EuiConfirmModal
           title="Delete archived item?"
@@ -246,6 +332,22 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
         >
           <p>
             This action cannot be undone. The work item will be permanently deleted.
+          </p>
+        </EuiConfirmModal>
+      )}
+
+      {/* Bulk Delete Confirmation */}
+      {showBulkDeleteConfirm && (
+        <EuiConfirmModal
+          title={`Delete ${selectedItems.length} archived item${selectedItems.length > 1 ? 's' : ''}?`}
+          onCancel={() => setShowBulkDeleteConfirm(false)}
+          onConfirm={handleBulkDelete}
+          cancelButtonText="Cancel"
+          confirmButtonText="Delete"
+          buttonColor="danger"
+        >
+          <p>
+            This action cannot be undone. {selectedItems.length > 1 ? 'These items' : 'This item'} will be permanently deleted.
           </p>
         </EuiConfirmModal>
       )}

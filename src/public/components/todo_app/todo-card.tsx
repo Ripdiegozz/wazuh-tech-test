@@ -6,6 +6,7 @@ import {
   EuiPopover,
   EuiButtonIcon,
   EuiLoadingSpinner,
+  EuiConfirmModal,
 } from '@elastic/eui';
 import { TodoItem, TodoPriority } from '../../../common/types';
 
@@ -13,6 +14,7 @@ interface TodoCardProps {
   todo: TodoItem;
   onEdit: () => void;
   onArchive: () => void;
+  onDelete: () => void;
   isPending?: boolean;
 }
 
@@ -27,9 +29,12 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   todo,
   onEdit,
   onArchive,
+  onDelete,
   isPending = false,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const getAssigneeInitials = (assignee?: string): string => {
     if (!assignee) return '?';
@@ -46,6 +51,16 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   };
 
   const priorityConfig = PRIORITY_CONFIG[todo.priority];
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete();
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      setIsDeleting(false);
+    }
+  };
 
   const menuPanels = [
     {
@@ -67,17 +82,31 @@ export const TodoCard: React.FC<TodoCardProps> = ({
             onArchive();
           },
         },
+        {
+          name: 'Delete',
+          icon: 'trash',
+          onClick: () => {
+            setIsPopoverOpen(false);
+            setShowDeleteConfirm(true);
+          },
+        },
       ],
     },
   ];
 
   const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger edit if modal is open
+    if (showDeleteConfirm) {
+      return;
+    }
     // Don't trigger edit if clicking on popover button or context menu
     const target = e.target as HTMLElement;
     if (
       target.closest('.euiButtonIcon') ||
       target.closest('.euiContextMenu') ||
-      target.closest('.euiPopover__panel')
+      target.closest('.euiPopover__panel') ||
+      target.closest('.euiModal') ||
+      target.closest('.euiOverlayMask')
     ) {
       return;
     }
@@ -162,6 +191,24 @@ export const TodoCard: React.FC<TodoCardProps> = ({
           </EuiPopover>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <EuiConfirmModal
+          title="Delete this task?"
+          onCancel={() => !isDeleting && setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteConfirm}
+          cancelButtonText="Cancel"
+          confirmButtonText={isDeleting ? 'Deleting...' : 'Delete'}
+          buttonColor="danger"
+          confirmButtonDisabled={isDeleting}
+          isLoading={isDeleting}
+        >
+          <p>
+            Are you sure you want to delete <strong>"{todo.title}"</strong>? This action cannot be undone.
+          </p>
+        </EuiConfirmModal>
+      )}
     </div>
   );
 };

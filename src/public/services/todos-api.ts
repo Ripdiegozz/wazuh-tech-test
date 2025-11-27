@@ -130,5 +130,58 @@ export class TodosApiService {
     }
     return response.data;
   }
+
+  // ============================================
+  // Bulk Operations
+  // ============================================
+
+  /**
+   * Bulk archive multiple TODO items
+   */
+  async bulkArchive(ids: string[]): Promise<BulkOperationResult> {
+    const response = await this.http.post<ApiResponse<BulkOperationResult>>(
+      '/api/custom_plugin/todos/bulk/archive',
+      { body: JSON.stringify({ ids }) }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to bulk archive TODOs');
+    }
+    return response.data;
+  }
+
+  /**
+   * Bulk restore multiple archived TODO items
+   */
+  async bulkRestore(ids: string[]): Promise<BulkOperationResult> {
+    const response = await this.http.post<ApiResponse<BulkOperationResult>>(
+      '/api/custom_plugin/todos/bulk/restore',
+      { body: JSON.stringify({ ids }) }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to bulk restore TODOs');
+    }
+    return response.data;
+  }
+
+  /**
+   * Bulk delete multiple TODO items
+   */
+  async bulkDelete(ids: string[]): Promise<BulkOperationResult> {
+    const response = await this.http.post<ApiResponse<BulkOperationResult>>(
+      '/api/custom_plugin/todos/bulk/delete',
+      { body: JSON.stringify({ ids }) }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to bulk delete TODOs');
+    }
+    return response.data;
+  }
+}
+
+// Bulk operation result interface
+interface BulkOperationResult {
+  processed: number;
+  failed: number;
+  errors?: Array<{ id: string; error: string }>;
 }
 
