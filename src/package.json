@@ -11,7 +11,12 @@
     "test:coverage": "node test/jest --coverage"
   },
   "dependencies": {
+    "@elastic/eui": "npm:@opensearch-project/oui@1.8.1",
     "@tanstack/react-query": "^4.36.1",
+    "@types/react": "^16.14.23",
+    "@types/react-dom": "^16.9.8",
+    "react": "^16.14.0",
+    "react-dom": "^16.12.0",
     "use-sync-external-store": "^1.2.0"
   },
   "devDependencies": {
