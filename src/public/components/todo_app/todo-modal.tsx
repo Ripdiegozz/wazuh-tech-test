@@ -18,8 +18,8 @@ import {
   EuiFlexItem,
   EuiSpacer,
   EuiDatePicker,
-  EuiMarkdownEditor,
 } from '@elastic/eui';
+import { MarkdownEditor } from './shared';
 import { Moment } from 'moment';
 import { 
   TodoPriority, 
@@ -111,13 +111,12 @@ export const TodoModal: React.FC<TodoModalProps> = ({
 
           {/* Description - Markdown */}
           <EuiFormRow label="Description" fullWidth helpText="Supports markdown formatting">
-            <EuiMarkdownEditor
-              aria-label="Description"
-              placeholder="Add a description... (supports markdown)"
+            <MarkdownEditor
               value={description}
               onChange={setDescription}
+              placeholder="Add a description..."
               height={150}
-              initialViewMode="editing"
+              ariaLabel="Description"
             />
           </EuiFormRow>
 

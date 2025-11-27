@@ -12,18 +12,15 @@ import {
   EuiSpacer,
   EuiHorizontalRule,
   EuiFieldText,
-  EuiFieldNumber,
   EuiSuperSelect,
   EuiComboBox,
   EuiDatePicker,
   EuiToolTip,
   EuiIcon,
   EuiConfirmModal,
-  EuiMarkdownEditor,
-  EuiMarkdownFormat,
 } from '@elastic/eui';
 import moment from 'moment';
-import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
+import { TodoItem } from '../../../common/types';
 import { DATE_FORMAT } from '../../../common';
 import {
   STATUS_OPTIONS,
@@ -31,6 +28,7 @@ import {
   COMPLIANCE_OPTIONS,
   SUGGESTED_TAGS,
 } from '../../constants';
+import { InlineTextEditor, EditableMarkdown } from './shared';
 
 interface TodoDetailPanelProps {
   todo: TodoItem;
@@ -39,105 +37,6 @@ interface TodoDetailPanelProps {
   onArchive: (id: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
-
-// ============================================
-// Inline Text Editor
-// ============================================
-interface InlineTextEditorProps {
-  value: string;
-  onSave: (value: string) => void;
-  placeholder?: string;
-  type?: 'text' | 'number';
-}
-
-const InlineTextEditor: React.FC<InlineTextEditorProps> = ({
-  value,
-  onSave,
-  placeholder = 'None',
-  type = 'text',
-}) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value);
-
-  useEffect(() => {
-    setEditValue(value);
-  }, [value]);
-
-  const handleSave = () => {
-    onSave(editValue);
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setEditValue(value);
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSave();
-    if (e.key === 'Escape') handleCancel();
-  };
-
-  if (isEditing) {
-    return (
-      <EuiFlexGroup gutterSize="xs" alignItems="center" responsive={false}>
-        <EuiFlexItem>
-          {type === 'number' ? (
-            <EuiFieldNumber
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              compressed
-              autoFocus
-              min={0}
-              style={{ width: '80px' }}
-            />
-          ) : (
-            <EuiFieldText
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              compressed
-              autoFocus
-              placeholder={placeholder}
-            />
-          )}
-        </EuiFlexItem>
-        <EuiFlexItem grow={false}>
-          <EuiButtonIcon
-            iconType="check"
-            color="primary"
-            aria-label="Save"
-            onClick={handleSave}
-            size="s"
-          />
-        </EuiFlexItem>
-        <EuiFlexItem grow={false}>
-          <EuiButtonIcon
-            iconType="cross"
-            color="text"
-            aria-label="Cancel"
-            onClick={handleCancel}
-            size="s"
-          />
-        </EuiFlexItem>
-      </EuiFlexGroup>
-    );
-  }
-
-  return (
-    <div
-      className="todo-detail__inline-value"
-      onClick={() => setIsEditing(true)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && setIsEditing(true)}
-    >
-      {value || <span className="todo-detail__placeholder">{placeholder}</span>}
-      <EuiIcon type="pencil" size="s" className="todo-detail__edit-icon" />
-    </div>
-  );
-};
 
 // ============================================
 // Main Component
@@ -153,13 +52,10 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(todo.title);
-  const [descEditing, setDescEditing] = useState(false);
-  const [descValue, setDescValue] = useState(todo.description || '');
 
   // Update local state when todo changes
   useEffect(() => {
     setTitleValue(todo.title);
-    setDescValue(todo.description || '');
   }, [todo]);
 
   const handleFieldUpdate = useCallback(async (field: keyof TodoItem, value: any) => {
@@ -198,12 +94,6 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
       handleFieldUpdate('title', titleValue.trim());
     }
     setTitleEditing(false);
-  };
-
-  // Description handlers
-  const handleDescSave = () => {
-    handleFieldUpdate('description', descValue || undefined);
-    setDescEditing(false);
   };
 
   // Tags as ComboBox options
@@ -424,44 +314,12 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
         </EuiTitle>
         <EuiSpacer size="s" />
         
-        {descEditing ? (
-          <>
-            <EuiMarkdownEditor
-              aria-label="Description editor"
-              value={descValue}
-              onChange={setDescValue}
-              height={200}
-              initialViewMode="editing"
-            />
-            <EuiSpacer size="s" />
-            <EuiFlexGroup gutterSize="s" justifyContent="flexEnd">
-              <EuiFlexItem grow={false}>
-                <EuiButtonIcon iconType="cross" aria-label="Cancel" onClick={() => { setDescValue(todo.description || ''); setDescEditing(false); }} />
-              </EuiFlexItem>
-              <EuiFlexItem grow={false}>
-                <EuiButtonIcon iconType="check" color="primary" aria-label="Save" onClick={handleDescSave} />
-              </EuiFlexItem>
-            </EuiFlexGroup>
-          </>
-        ) : (
-          <div
-            className="todo-detail__description"
-            onClick={() => setDescEditing(true)}
-            role="button"
-            tabIndex={0}
-          >
-            {todo.description ? (
-              <EuiMarkdownFormat className="todo-detail__markdown">
-                {todo.description}
-              </EuiMarkdownFormat>
-            ) : (
-              <EuiText size="s" color="subdued">
-                <p><em>Click to add description...</em></p>
-              </EuiText>
-            )}
-            <EuiIcon type="pencil" size="s" className="todo-detail__edit-icon" />
-          </div>
-        )}
+        <EditableMarkdown
+          value={todo.description || ''}
+          onSave={(value) => handleFieldUpdate('description', value || undefined)}
+          emptyText="Click to add description..."
+          className="todo-detail__description"
+        />
 
         <EuiHorizontalRule />
 

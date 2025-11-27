@@ -8,7 +8,8 @@ import {
   EuiLoadingSpinner,
   EuiConfirmModal,
 } from '@elastic/eui';
-import { TodoItem, TodoPriority } from '../../../common/types';
+import { TodoItem } from '../../../common/types';
+import { PRIORITY_CONFIG } from '../../constants';
 
 interface TodoCardProps {
   todo: TodoItem;
@@ -17,13 +18,6 @@ interface TodoCardProps {
   onDelete: () => void;
   isPending?: boolean;
 }
-
-const PRIORITY_CONFIG: Record<TodoPriority, { icon: string; className: string }> = {
-  [TodoPriority.LOW]: { icon: 'arrowDown', className: 'priority-indicator--low' },
-  [TodoPriority.MEDIUM]: { icon: 'minus', className: 'priority-indicator--medium' },
-  [TodoPriority.HIGH]: { icon: 'arrowUp', className: 'priority-indicator--high' },
-  [TodoPriority.CRITICAL]: { icon: 'bolt', className: 'priority-indicator--critical' },
-};
 
 export const TodoCard: React.FC<TodoCardProps> = ({
   todo,

@@ -20,6 +20,14 @@ export const PRIORITY_OPTIONS = [
   { value: TodoPriority.CRITICAL, inputDisplay: React.createElement(EuiBadge, { color: 'danger' }, 'Critical') },
 ];
 
+// Priority Config for TodoCard icons, labels, and styles
+export const PRIORITY_CONFIG: Record<TodoPriority, { icon: string; label: string; className: string }> = {
+  [TodoPriority.LOW]: { icon: 'arrowDown', label: 'Low', className: 'priority-indicator--low' },
+  [TodoPriority.MEDIUM]: { icon: 'minus', label: 'Medium', className: 'priority-indicator--medium' },
+  [TodoPriority.HIGH]: { icon: 'arrowUp', label: 'High', className: 'priority-indicator--high' },
+  [TodoPriority.CRITICAL]: { icon: 'bolt', label: 'Critical', className: 'priority-indicator--critical' },
+};
+
 // Compliance Standards Options for EuiComboBox
 export const COMPLIANCE_OPTIONS = [
   { label: 'PCI DSS', value: ComplianceStandard.PCI_DSS },
