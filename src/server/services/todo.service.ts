@@ -381,6 +381,61 @@ export class TodoService {
   }
 
   // ============================================
+  // Seed / Bulk Create (for testing)
+  // ============================================
+
+  /**
+   * Bulk create multiple TODOs (used for seeding test data)
+   */
+  public async bulkCreate(todos: Omit<TodoItem, 'id'>[]): Promise<BulkOperationResult> {
+    if (!todos || todos.length === 0) {
+      return { success: true, processed: 0, failed: 0 };
+    }
+
+    const client = this.osService.getClient();
+    const ids: string[] = [];
+    
+    const operations = todos.flatMap((todo) => {
+      const id = uuidv4();
+      ids.push(id);
+      return [
+        { index: { _index: TODO_INDEX_NAME, _id: id } },
+        { ...todo, id },
+      ];
+    });
+
+    const response = await client.bulk({
+      body: operations,
+      refresh: 'wait_for',
+    });
+
+    const result = this.parseBulkResponse(response.body, ids);
+    this.logger.info(`Bulk created ${result.processed} TODO items, ${result.failed} failed`);
+    
+    return result;
+  }
+
+  /**
+   * Delete all TODOs (for testing cleanup)
+   */
+  public async deleteAll(): Promise<{ deleted: number }> {
+    const client = this.osService.getClient();
+    
+    const response = await client.deleteByQuery({
+      index: TODO_INDEX_NAME,
+      body: {
+        query: { match_all: {} },
+      },
+      refresh: true,
+    });
+
+    const deleted = response.body.deleted || 0;
+    this.logger.info(`Deleted all ${deleted} TODO items`);
+    
+    return { deleted };
+  }
+
+  // ============================================
   // Statistics
   // ============================================
 

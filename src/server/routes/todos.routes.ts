@@ -1,4 +1,5 @@
 import { IRouter, CoreSetup, Logger } from 'src/core/server';
+import { schema } from '@osd/config-schema';
 import { TodoService } from '../services/todo.service';
 import { OpenSearchService } from '../services/opensearch.service';
 import { 
@@ -12,6 +13,7 @@ import {
   bulkAssignSchema,
 } from '../../common/schemas/todo_schema';
 import { TodoSearchParams, TodoStatus, TodoPriority } from '../../common/types';
+import { generateTodos, SEED_CONFIG } from '../scripts/seed-todos';
 
 // Helper to create TodoService instance
 function createTodoService(context: any, logger: Logger): TodoService {
@@ -625,6 +627,102 @@ export function registerTodoRoutes(
           body: { 
             success: false,
             message: 'Failed to bulk assign TODO items',
+            error: error.message 
+          },
+        });
+      }
+    }
+  );
+
+  // ============================================
+  // Seed & Testing Endpoints
+  // ============================================
+
+  // POST /api/custom_plugin/todos/seed - Seed test data (for performance testing)
+  router.post(
+    {
+      path: '/api/custom_plugin/todos/seed',
+      validate: {
+        body: schema.object({
+          count: schema.number({ defaultValue: SEED_CONFIG.TOTAL_TODOS, min: 1, max: 10000 }),
+        }),
+      },
+    },
+    async (context, request, response) => {
+      try {
+        const service = createTodoService(context, logger);
+        const count = request.body.count;
+        
+        logger.info(`Starting seed of ${count} TODO items...`);
+        const startTime = Date.now();
+        
+        // Generate and insert in batches
+        const batchSize = SEED_CONFIG.BATCH_SIZE;
+        let totalProcessed = 0;
+        let totalFailed = 0;
+        
+        for (let i = 0; i < count; i += batchSize) {
+          const batchCount = Math.min(batchSize, count - i);
+          const todos = generateTodos(batchCount);
+          const result = await service.bulkCreate(todos);
+          totalProcessed += result.processed;
+          totalFailed += result.failed;
+        }
+        
+        const duration = Date.now() - startTime;
+        logger.info(`Seed completed: ${totalProcessed} created, ${totalFailed} failed in ${duration}ms`);
+        
+        return response.ok({ 
+          body: { 
+            success: totalFailed === 0,
+            data: {
+              requested: count,
+              processed: totalProcessed,
+              failed: totalFailed,
+              duration: `${duration}ms`,
+            },
+            message: `Seeded ${totalProcessed} TODO items in ${duration}ms`
+          } 
+        });
+      } catch (error) {
+        logger.error('Error seeding TODOs', error);
+        return response.customError({
+          statusCode: 500,
+          body: { 
+            success: false,
+            message: 'Failed to seed TODO items',
+            error: error.message 
+          },
+        });
+      }
+    }
+  );
+
+  // DELETE /api/custom_plugin/todos/all - Delete all TODOs (for cleanup after testing)
+  router.delete(
+    {
+      path: '/api/custom_plugin/todos/all',
+      validate: false,
+    },
+    async (context, request, response) => {
+      try {
+        const service = createTodoService(context, logger);
+        const result = await service.deleteAll();
+        
+        return response.ok({ 
+          body: { 
+            success: true,
+            data: result,
+            message: `Deleted ${result.deleted} TODO items`
+          } 
+        });
+      } catch (error) {
+        logger.error('Error deleting all TODOs', error);
+        return response.customError({
+          statusCode: 500,
+          body: { 
+            success: false,
+            message: 'Failed to delete all TODO items',
             error: error.message 
           },
         });
