@@ -11,7 +11,6 @@ import {
   EuiForm,
   EuiFormRow,
   EuiFieldText,
-  EuiTextArea,
   EuiSuperSelect,
   EuiComboBox,
   EuiFieldNumber,
@@ -20,6 +19,7 @@ import {
   EuiSpacer,
   EuiDatePicker,
 } from '@elastic/eui';
+import { MarkdownEditor } from './shared';
 import { Moment } from 'moment';
 import { 
   TodoPriority, 
@@ -109,14 +109,14 @@ export const TodoModal: React.FC<TodoModalProps> = ({
 
           <EuiSpacer size="m" />
 
-          {/* Description */}
-          <EuiFormRow label="Description" fullWidth>
-            <EuiTextArea
-              placeholder="Add a description..."
+          {/* Description - Markdown */}
+          <EuiFormRow label="Description" fullWidth helpText="Supports markdown formatting">
+            <MarkdownEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              fullWidth
+              onChange={setDescription}
+              placeholder="Add a description..."
+              height={150}
+              ariaLabel="Description"
             />
           </EuiFormRow>
 
