@@ -4,3 +4,4 @@ export { useKeyboardShortcuts, formatShortcut, KEYBOARD_SHORTCUTS_HELP, SEARCH_I
 export { useDebounce, useDebouncedSearch } from './use-debounce';
 export { useTour } from './use-tour';
 export { useIsMobile, useIsTablet, useIsDesktop, BREAKPOINTS } from './use-mobile';
+export { useUrlFilters, getFiltersFromUrl, updateUrlFilters } from './use-url-filters';

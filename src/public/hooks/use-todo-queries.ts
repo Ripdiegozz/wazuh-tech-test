@@ -6,7 +6,6 @@ import {
   TodoSearchParams, 
   CreateTodoRequest, 
   UpdateTodoRequest,
-  PaginatedResponse,
 } from '../../common/types';
 
 // ============================================
@@ -88,17 +87,45 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
   };
 
   /**
-   * Fetch archived todos
+   * Fetch archived todos with pagination
    */
-  const useArchivedTodos = () => {
+  const useArchivedTodos = (params: { 
+    page?: number; 
+    size?: number;
+    sortField?: string;
+    sortOrder?: 'asc' | 'desc';
+  } = {}) => {
+    const { page = 1, size = 25, sortField = 'archivedAt', sortOrder = 'desc' } = params;
+    
     return useQuery({
-      queryKey: todoKeys.archived(),
+      queryKey: [...todoKeys.archived(), { page, size, sortField, sortOrder }],
       queryFn: async () => {
-        const response = await api.searchTodos({ archived: true, size: 100 });
+        const response = await api.searchTodos({ 
+          archived: true, 
+          page, 
+          size,
+          sortField,
+          sortOrder,
+        });
         setArchivedTodos(response.items);
         return response;
       },
       staleTime: 30000,
+    });
+  };
+
+  /**
+   * Get archived todos count (for tab badge)
+   */
+  const useArchivedCount = () => {
+    return useQuery({
+      queryKey: [...todoKeys.archived(), 'count'],
+      queryFn: async () => {
+        // Just get 1 item to get the total count
+        const response = await api.searchTodos({ archived: true, page: 1, size: 1 });
+        return response.total;
+      },
+      staleTime: 60000, // Cache for 1 minute
     });
   };
 
@@ -361,6 +388,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
     // Queries
     useTodos,
     useArchivedTodos,
+    useArchivedCount,
     useTodo,
     useStatistics,
     // Mutations

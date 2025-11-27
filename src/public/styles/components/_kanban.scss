@@ -109,6 +109,17 @@
     }
   }
 
+  &__load-more {
+    padding: $euiSizeS $euiSizeM;
+    text-align: center;
+    border-top: $euiBorderThin;
+    background: transparentize($euiColorLightShade, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $euiSizeXS;
+  }
+
   // Column color variants using EUI colors
   &--planned .kanban-column__header {
     border-left: 4px solid $euiColorVis1;
