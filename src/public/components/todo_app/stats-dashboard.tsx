@@ -179,11 +179,28 @@ const StatsBarChart: React.FC<{
   );
 };
 
+// Hook to detect mobile screens
+const useIsMobile = (breakpoint = 480) => {
+  const [isMobile, setIsMobile] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth <= breakpoint : false
+  );
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+};
+
 // Pie Chart Component using Chart.js
 const StatsPieChart: React.FC<{
   data: ChartDataItem[];
   id: string;
 }> = ({ data, id }) => {
+  const isMobile = useIsMobile();
+  
   // Filter out zero values
   const filteredData = data.filter(d => d.value > 0);
   
@@ -215,13 +232,13 @@ const StatsPieChart: React.FC<{
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: isMobile ? 'bottom' as const : 'right' as const,
         labels: {
           usePointStyle: true,
           pointStyle: 'circle',
-          padding: 15,
+          padding: isMobile ? 10 : 15,
           font: {
-            size: 12,
+            size: isMobile ? 11 : 12,
           },
         },
       },
@@ -238,7 +255,7 @@ const StatsPieChart: React.FC<{
   };
 
   return (
-    <div className="pie-chart-container" style={{ height: 220 }}>
+    <div className="pie-chart-container" style={{ height: isMobile ? 280 : 220 }}>
       <Pie data={chartData} options={options} />
     </div>
   );

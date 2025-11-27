@@ -173,6 +173,79 @@ $breakpoint-l: 1200px;
     width: 100% !important;
     max-width: 100% !important;
   }
+
+  // TODO 5: Markdown editor - reduced height on mobile
+  .euiMarkdownEditor {
+    .euiMarkdownEditorTextArea {
+      min-height: 80px !important;
+      max-height: 120px !important;
+    }
+  }
+
+  // TODO 6: Action buttons - larger tap targets
+  .euiButtonIcon {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  // Editable markdown buttons
+  .editable-markdown {
+    .euiFlexGroup {
+      gap: $euiSizeS;
+    }
+    
+    .euiButtonIcon {
+      width: 44px !important;
+      height: 44px !important;
+    }
+  }
+
+  // TODO 8: Modal - full width on mobile
+  .euiModal {
+    max-width: calc(100% - #{$euiSizeM * 2}) !important;
+    margin: $euiSizeM !important;
+    
+    .euiModalBody {
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+  }
+
+  // TODO 9: Stats cards - more compact
+  .stats-card {
+    .euiStat__title {
+      font-size: 1.75rem !important;
+    }
+    
+    .euiStat__description {
+      font-size: $euiFontSizeXS !important;
+    }
+  }
+
+  .stats-compliance-badge {
+    padding: $euiSizeXS !important;
+    
+    .euiText {
+      font-size: $euiFontSizeXS !important;
+    }
+  }
+
+  // TODO 10: Modal form inputs - stack vertically
+  .euiModal {
+    .euiFlexGroup:not(.euiModalFooter .euiFlexGroup) {
+      flex-direction: column;
+      
+      .euiFlexItem {
+        width: 100%;
+        min-width: 100% !important;
+      }
+    }
+    
+    // Keep footer buttons horizontal
+    .euiModalFooter .euiFlexGroup {
+      flex-direction: row;
+    }
+  }
 }
 
 // Small devices (landscape phones, tablets, 481px - 768px)
