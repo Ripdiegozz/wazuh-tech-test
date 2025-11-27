@@ -273,6 +273,90 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
     });
   };
 
+  // ============================================
+  // Bulk Operations
+  // ============================================
+
+  /**
+   * Bulk archive multiple TODOs
+   */
+  const useBulkArchive = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: (ids: string[]) => api.bulkArchive(ids),
+      onMutate: async (ids) => {
+        ids.forEach((id) => addPendingId(id));
+        await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
+      },
+      onSuccess: (_, ids) => {
+        ids.forEach((id) => {
+          removeTodo(id);
+          removePendingId(id);
+        });
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
+        queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
+      },
+      onError: (_, ids) => {
+        ids.forEach((id) => removePendingId(id));
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+      },
+    });
+  };
+
+  /**
+   * Bulk restore multiple archived TODOs
+   */
+  const useBulkRestore = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: (ids: string[]) => api.bulkRestore(ids),
+      onMutate: async (ids) => {
+        ids.forEach((id) => addPendingId(id));
+      },
+      onSuccess: (_, ids) => {
+        ids.forEach((id) => removePendingId(id));
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
+        queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
+      },
+      onError: (_, ids) => {
+        ids.forEach((id) => removePendingId(id));
+        queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
+      },
+    });
+  };
+
+  /**
+   * Bulk delete multiple TODOs
+   */
+  const useBulkDelete = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: (ids: string[]) => api.bulkDelete(ids),
+      onMutate: async (ids) => {
+        ids.forEach((id) => addPendingId(id));
+        await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
+        await queryClient.cancelQueries({ queryKey: todoKeys.archived() });
+        ids.forEach((id) => removeTodo(id));
+      },
+      onSuccess: (_, ids) => {
+        ids.forEach((id) => removePendingId(id));
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
+        queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
+      },
+      onError: (_, ids) => {
+        ids.forEach((id) => removePendingId(id));
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
+      },
+    });
+  };
+
   return {
     // Queries
     useTodos,
@@ -286,6 +370,10 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
     useArchiveTodo,
     useRestoreTodo,
     useUpdateStatus,
+    // Bulk Operations
+    useBulkArchive,
+    useBulkRestore,
+    useBulkDelete,
   };
 };
 

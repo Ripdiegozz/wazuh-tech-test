@@ -13,6 +13,9 @@ import {
   EuiText,
   EuiCheckbox,
   EuiLoadingSpinner,
+  EuiButton,
+  EuiSpacer,
+  EuiConfirmModal,
 } from '@elastic/eui';
 import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
 
@@ -22,6 +25,8 @@ interface TableViewProps {
   onDeleteTodo: (id: string) => void;
   onArchiveTodo: (id: string) => void;
   onStatusChange: (id: string, status: TodoStatus) => void;
+  onBulkArchive?: (ids: string[]) => void;
+  onBulkDelete?: (ids: string[]) => void;
   isPending?: (id: string) => boolean;
 }
 
@@ -46,11 +51,42 @@ export const TableView: React.FC<TableViewProps> = ({
   onDeleteTodo,
   onArchiveTodo,
   onStatusChange,
+  onBulkArchive,
+  onBulkDelete,
   isPending = () => false,
 }) => {
   const [selectedItems, setSelectedItems] = useState<TodoItem[]>([]);
   const [sortField, setSortField] = useState<keyof TodoItem>('updatedAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Clear selection when todos change (e.g., after bulk operation)
+  React.useEffect(() => {
+    setSelectedItems((prev) => prev.filter((item) => todos.some((t) => t.id === item.id)));
+  }, [todos]);
+
+  const handleBulkArchive = () => {
+    if (onBulkArchive && selectedItems.length > 0) {
+      onBulkArchive(selectedItems.map((item) => item.id));
+      setSelectedItems([]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (onBulkDelete && selectedItems.length > 0) {
+      onBulkDelete(selectedItems.map((item) => item.id));
+      setSelectedItems([]);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.length === todos.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems([...todos]);
+    }
+  };
 
   const formatId = (id: string): string => {
     return `TODO-${id.slice(0, 4).toUpperCase()}`;
@@ -242,34 +278,93 @@ export const TableView: React.FC<TableViewProps> = ({
   }, [todos, sortField, sortDirection]);
 
   return (
-    <div className="todo-table">
-      <EuiBasicTable
-        items={sortedTodos}
-        columns={columns}
-        rowHeader="title"
-        sorting={{
-          sort: {
-            field: sortField,
-            direction: sortDirection,
-          },
-        }}
-        onChange={onTableChange}
-        tableLayout="fixed"
-        noItemsMessage={
-          <div className="empty-state">
-            <EuiIcon type="document" size="xxl" className="empty-state__icon" />
-            <div className="empty-state__title">No work items found</div>
-            <div className="empty-state__description">
-              Create your first TODO item to get started with tracking your security compliance tasks.
+    <>
+      <div className="todo-table">
+        {/* Bulk Actions Bar */}
+        {todos.length > 0 && (
+          <>
+            <EuiFlexGroup alignItems="center" gutterSize="m" className="todo-table__bulk-actions">
+              <EuiFlexItem grow={false}>
+                <EuiCheckbox
+                  id="select-all-checkbox"
+                  checked={selectedItems.length === todos.length && todos.length > 0}
+                  indeterminate={selectedItems.length > 0 && selectedItems.length < todos.length}
+                  onChange={handleSelectAll}
+                  label={selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all'}
+                />
+              </EuiFlexItem>
+              {selectedItems.length > 0 && (
+                <>
+                  <EuiFlexItem grow={false}>
+                    <EuiButton
+                      size="s"
+                      iconType="folderClosed"
+                      onClick={handleBulkArchive}
+                    >
+                      Archive ({selectedItems.length})
+                    </EuiButton>
+                  </EuiFlexItem>
+                  <EuiFlexItem grow={false}>
+                    <EuiButton
+                      size="s"
+                      iconType="trash"
+                      color="danger"
+                      onClick={() => setShowDeleteConfirm(true)}
+                    >
+                      Delete ({selectedItems.length})
+                    </EuiButton>
+                  </EuiFlexItem>
+                </>
+              )}
+            </EuiFlexGroup>
+            <EuiSpacer size="s" />
+          </>
+        )}
+
+        <EuiBasicTable
+          items={sortedTodos}
+          columns={columns}
+          rowHeader="title"
+          sorting={{
+            sort: {
+              field: sortField,
+              direction: sortDirection,
+            },
+          }}
+          onChange={onTableChange}
+          tableLayout="fixed"
+          noItemsMessage={
+            <div className="empty-state">
+              <EuiIcon type="document" size="xxl" className="empty-state__icon" />
+              <div className="empty-state__title">No work items found</div>
+              <div className="empty-state__description">
+                Create your first TODO item to get started with tracking your security compliance tasks.
+              </div>
             </div>
-          </div>
-        }
-      />
-      
-      <div className="todo-table__footer">
-        {todos.length} of {todos.length} items
+          }
+        />
+        
+        <div className="todo-table__footer">
+          {todos.length} of {todos.length} items
+        </div>
       </div>
-    </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <EuiConfirmModal
+          title={`Delete ${selectedItems.length} item${selectedItems.length > 1 ? 's' : ''}?`}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={handleBulkDelete}
+          cancelButtonText="Cancel"
+          confirmButtonText="Delete"
+          buttonColor="danger"
+        >
+          <p>
+            This action cannot be undone. {selectedItems.length > 1 ? 'These items' : 'This item'} will be permanently deleted.
+          </p>
+        </EuiConfirmModal>
+      )}
+    </>
   );
 };
 

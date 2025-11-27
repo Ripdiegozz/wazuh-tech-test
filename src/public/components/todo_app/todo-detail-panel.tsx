@@ -19,6 +19,7 @@ import {
   EuiDatePicker,
   EuiToolTip,
   EuiIcon,
+  EuiConfirmModal,
 } from '@elastic/eui';
 import moment from 'moment';
 import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
@@ -148,6 +149,7 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
   onDelete,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(todo.title);
   const [descEditing, setDescEditing] = useState(false);
@@ -163,12 +165,23 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
     await onUpdate(todo.id, { [field]: value });
   }, [todo.id, onUpdate]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteCancel = () => {
+    if (!isDeleting) {
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDeleteConfirm = useCallback(async () => {
     setIsDeleting(true);
     try {
       await onDelete(todo.id);
+      setShowDeleteConfirm(false);
       onClose();
-    } finally {
+    } catch (error) {
       setIsDeleting(false);
     }
   }, [todo.id, onDelete, onClose]);
@@ -283,7 +296,7 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
               </EuiFlexItem>
               <EuiFlexItem grow={false}>
                 <EuiToolTip content="Delete">
-                  <EuiButtonIcon iconType="trash" color="danger" aria-label="Delete" onClick={handleDelete} isLoading={isDeleting} />
+                  <EuiButtonIcon iconType="trash" color="danger" aria-label="Delete" onClick={handleDeleteClick} />
                 </EuiToolTip>
               </EuiFlexItem>
             </EuiFlexGroup>
@@ -459,6 +472,24 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
           {todo.id && <p><strong>ID:</strong> <code>{todo.id}</code></p>}
         </EuiText>
       </EuiFlyoutBody>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <EuiConfirmModal
+          title="Delete this task?"
+          onCancel={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          cancelButtonText="Cancel"
+          confirmButtonText={isDeleting ? 'Deleting...' : 'Delete'}
+          buttonColor="danger"
+          confirmButtonDisabled={isDeleting}
+          isLoading={isDeleting}
+        >
+          <p>
+            Are you sure you want to delete <strong>"{todo.title}"</strong>? This action cannot be undone.
+          </p>
+        </EuiConfirmModal>
+      )}
     </EuiFlyout>
   );
 };

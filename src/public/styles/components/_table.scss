@@ -19,6 +19,17 @@
     }
   }
 
+  &__bulk-actions {
+    padding: $euiSizeS $euiSizeM;
+    background: $euiColorLightestShade;
+    border-bottom: $euiBorderThin;
+    
+    .euiCheckbox__label {
+      font-size: $euiFontSizeS;
+      color: $euiColorDarkShade;
+    }
+  }
+
   &__footer {
     padding: $euiSizeS $euiSizeM;
     border-top: $euiBorderThin;
