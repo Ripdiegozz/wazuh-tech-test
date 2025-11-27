@@ -13,13 +13,14 @@ import {
   EuiHorizontalRule,
   EuiFieldText,
   EuiFieldNumber,
-  EuiTextArea,
   EuiSuperSelect,
   EuiComboBox,
   EuiDatePicker,
   EuiToolTip,
   EuiIcon,
   EuiConfirmModal,
+  EuiMarkdownEditor,
+  EuiMarkdownFormat,
 } from '@elastic/eui';
 import moment from 'moment';
 import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
@@ -417,7 +418,7 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
 
         <EuiSpacer size="l" />
 
-        {/* Description - Textarea */}
+        {/* Description - Markdown Editor */}
         <EuiTitle size="xs">
           <h3>Description</h3>
         </EuiTitle>
@@ -425,15 +426,15 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
         
         {descEditing ? (
           <>
-            <EuiTextArea
+            <EuiMarkdownEditor
+              aria-label="Description editor"
               value={descValue}
-              onChange={(e) => setDescValue(e.target.value)}
-              fullWidth
-              rows={6}
-              autoFocus
+              onChange={setDescValue}
+              height={200}
+              initialViewMode="editing"
             />
-            <EuiSpacer size="xs" />
-            <EuiFlexGroup gutterSize="xs" justifyContent="flexEnd">
+            <EuiSpacer size="s" />
+            <EuiFlexGroup gutterSize="s" justifyContent="flexEnd">
               <EuiFlexItem grow={false}>
                 <EuiButtonIcon iconType="cross" aria-label="Cancel" onClick={() => { setDescValue(todo.description || ''); setDescEditing(false); }} />
               </EuiFlexItem>
@@ -450,9 +451,9 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
             tabIndex={0}
           >
             {todo.description ? (
-              <EuiText size="s">
-                <p style={{ whiteSpace: 'pre-wrap' }}>{todo.description}</p>
-              </EuiText>
+              <EuiMarkdownFormat className="todo-detail__markdown">
+                {todo.description}
+              </EuiMarkdownFormat>
             ) : (
               <EuiText size="s" color="subdued">
                 <p><em>Click to add description...</em></p>

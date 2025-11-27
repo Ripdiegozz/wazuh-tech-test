@@ -137,5 +137,90 @@
       right: $euiSizeS;
     }
   }
+
+  &__markdown {
+    font-size: $euiFontSizeS;
+    
+    // Style markdown elements
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: $euiSizeS;
+      margin-bottom: $euiSizeXS;
+    }
+
+    p {
+      margin-bottom: $euiSizeS;
+    }
+
+    ul, ol {
+      padding-left: $euiSizeL;
+      margin-bottom: $euiSizeS;
+    }
+
+    code {
+      background: $euiColorLightestShade;
+      padding: 2px $euiSizeXS;
+      border-radius: $euiBorderRadiusSmall;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background: $euiColorLightestShade;
+      padding: $euiSizeS;
+      border-radius: $euiBorderRadius;
+      overflow-x: auto;
+      margin-bottom: $euiSizeS;
+
+      code {
+        background: transparent;
+        padding: 0;
+      }
+    }
+
+    blockquote {
+      border-left: 3px solid $euiColorPrimary;
+      padding-left: $euiSizeM;
+      margin: $euiSizeS 0;
+      color: $euiColorDarkShade;
+    }
+
+    a {
+      color: $euiColorPrimary;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: $euiSizeS;
+
+      th, td {
+        border: 1px solid $euiColorLightShade;
+        padding: $euiSizeXS $euiSizeS;
+        text-align: left;
+      }
+
+      th {
+        background: $euiColorLightestShade;
+        font-weight: $euiFontWeightSemiBold;
+      }
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid $euiColorLightShade;
+      margin: $euiSizeM 0;
+    }
+  }
+}
+
+// Markdown editor styling
+.euiMarkdownEditor {
+  .euiMarkdownEditorToolbar {
+    background: $euiColorLightestShade;
+  }
 }
 
