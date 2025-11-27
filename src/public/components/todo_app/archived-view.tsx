@@ -178,10 +178,14 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
         <EuiEmptyPrompt
           iconType="folderClosed"
           iconColor="subdued"
-          title={<h2>There are no archived work items</h2>}
+          title={<h2>No archived items</h2>}
           body={
-            <p>Any archived work items in your space will appear here.</p>
+            <p>
+              When you archive work items, they'll appear here. 
+              Archived items are hidden from the main views but can be restored anytime.
+            </p>
           }
+          titleSize="m"
         />
       </div>
     );
