@@ -25,6 +25,8 @@ interface TodoState {
   isModalOpen: boolean;
   // Detail Panel (Preview with inline edit)
   detailPanelTodo: TodoItem | null;
+  // Pending operations tracking (for loading states per item)
+  pendingIds: Set<string>;
 }
 
 // ============================================
@@ -45,7 +47,9 @@ type TodoAction =
   | { type: 'OPEN_CREATE_MODAL' }
   | { type: 'CLOSE_MODAL' }
   | { type: 'OPEN_DETAIL_PANEL'; payload: TodoItem }
-  | { type: 'CLOSE_DETAIL_PANEL' };
+  | { type: 'CLOSE_DETAIL_PANEL' }
+  | { type: 'ADD_PENDING_ID'; payload: string }
+  | { type: 'REMOVE_PENDING_ID'; payload: string };
 
 // ============================================
 // Initial State
@@ -66,6 +70,7 @@ const initialState: TodoState = {
   filters: initialFilters,
   isModalOpen: false,
   detailPanelTodo: null,
+  pendingIds: new Set<string>(),
 };
 
 // ============================================
@@ -142,6 +147,18 @@ function todoReducer(state: TodoState, action: TodoAction): TodoState {
     case 'CLOSE_DETAIL_PANEL':
       return { ...state, detailPanelTodo: null };
 
+    case 'ADD_PENDING_ID': {
+      const newPendingIds = new Set(state.pendingIds);
+      newPendingIds.add(action.payload);
+      return { ...state, pendingIds: newPendingIds };
+    }
+
+    case 'REMOVE_PENDING_ID': {
+      const newPendingIds = new Set(state.pendingIds);
+      newPendingIds.delete(action.payload);
+      return { ...state, pendingIds: newPendingIds };
+    }
+
     default:
       return state;
   }
@@ -157,6 +174,11 @@ interface TodoContextValue extends TodoState {
   addTodo: (todo: TodoItem) => void;
   updateTodoInStore: (id: string, updates: Partial<TodoItem>) => void;
   removeTodo: (id: string) => void;
+  // Pending state actions
+  addPendingId: (id: string) => void;
+  removePendingId: (id: string) => void;
+  isPending: (id: string) => boolean;
+  // View actions
   setView: (view: ViewType) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -243,6 +265,19 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'CLOSE_DETAIL_PANEL' });
   }, []);
 
+  // Pending state management
+  const addPendingId = useCallback((id: string) => {
+    dispatch({ type: 'ADD_PENDING_ID', payload: id });
+  }, []);
+
+  const removePendingId = useCallback((id: string) => {
+    dispatch({ type: 'REMOVE_PENDING_ID', payload: id });
+  }, []);
+
+  const isPending = useCallback((id: string) => {
+    return state.pendingIds.has(id);
+  }, [state.pendingIds]);
+
   // Computed
   const getTodosByStatus = useCallback(() => {
     const grouped: Record<TodoStatus, TodoItem[]> = {
@@ -290,6 +325,9 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     closeModal,
     openDetailPanel,
     closeDetailPanel,
+    addPendingId,
+    removePendingId,
+    isPending,
     getTodosByStatus,
     getSearchParams,
   }), [
@@ -309,6 +347,9 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     closeModal,
     openDetailPanel,
     closeDetailPanel,
+    addPendingId,
+    removePendingId,
+    isPending,
     getTodosByStatus,
     getSearchParams,
   ]);

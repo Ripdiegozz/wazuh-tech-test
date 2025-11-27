@@ -94,6 +94,10 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     updateTodoInStore,
     removeTodo,
     setLoading,
+    // Pending state
+    addPendingId,
+    removePendingId,
+    isPending,
   } = store;
 
   // Debounce search query (300ms delay, immediate clear when empty)
@@ -108,7 +112,9 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     removeTodo,
     setLoading,
     closeModal,
-  }), [setTodos, setArchivedTodos, addTodo, updateTodoInStore, removeTodo, setLoading, closeModal]);
+    addPendingId,
+    removePendingId,
+  }), [setTodos, setArchivedTodos, addTodo, updateTodoInStore, removeTodo, setLoading, closeModal, addPendingId, removePendingId]);
 
   // Create hooks with http and store actions
   const todoHooks = useMemo(
@@ -409,6 +415,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 onStatusChange={handleStatusChange}
                 onArchiveTodo={handleArchiveTodo}
                 onCreateInStatus={openCreateModal}
+                isPending={isPending}
               />
             )}
             {currentView === 'table' && (
@@ -418,6 +425,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 onDeleteTodo={handleDeleteTodo}
                 onArchiveTodo={handleArchiveTodo}
                 onStatusChange={handleStatusChange}
+                isPending={isPending}
               />
             )}
             {currentView === 'archived' && (
@@ -425,6 +433,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 todos={archivedTodosList}
                 onRestoreTodo={handleRestoreTodo}
                 onDeleteTodo={handleDeleteTodo}
+                isPending={isPending}
               />
             )}
             {currentView === 'stats' && (

@@ -16,6 +16,7 @@ interface KanbanBoardProps {
   onStatusChange: (id: string, status: TodoStatus) => void;
   onArchiveTodo: (id: string) => void;
   onCreateInStatus: () => void;
+  isPending?: (id: string) => boolean;
 }
 
 const COLUMN_ORDER: TodoStatus[] = [
@@ -41,6 +42,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onStatusChange,
   onArchiveTodo,
   onCreateInStatus,
+  isPending = () => false,
 }) => {
   const onDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result;
@@ -99,7 +101,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   index={index}
                   draggableId={todo.id}
                   spacing="m"
-                  hasInteractiveChildren
                 >
                   {(provided, state) => (
                     <div className={state.isDragging ? 'dragging' : ''}>
@@ -107,6 +108,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         todo={todo}
                         onEdit={() => onEditTodo(todo)}
                         onArchive={() => onArchiveTodo(todo.id)}
+                        isPending={isPending(todo.id)}
                       />
                     </div>
                   )}

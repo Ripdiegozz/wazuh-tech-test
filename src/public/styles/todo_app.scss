@@ -248,11 +248,33 @@
   cursor: pointer;
   transition: all $euiAnimSpeedFast ease;
   border: $euiBorderThin;
+  position: relative;
   @include euiBottomShadowSmall;
 
   &:hover {
     border-color: $euiColorPrimary;
     @include euiBottomShadowMedium;
+  }
+
+  // Pending state - shows when item is being updated
+  &--pending {
+    opacity: 0.7;
+    pointer-events: none;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba($euiColorEmptyShade, 0.3);
+      border-radius: $euiBorderRadius;
+    }
+  }
+
+  &__loading {
+    position: absolute;
+    top: $euiSizeS;
+    right: $euiSizeS;
+    z-index: 1;
   }
 
   &__cover {
@@ -400,6 +422,15 @@
     display: flex;
     align-items: center;
     gap: $euiSizeS;
+
+    // Pending state - shows spinner and dims content
+    &--pending {
+      opacity: 0.6;
+      
+      .euiLink {
+        pointer-events: none;
+      }
+    }
   }
 
   &__work-id {

@@ -5,6 +5,7 @@ import {
   EuiContextMenu,
   EuiPopover,
   EuiButtonIcon,
+  EuiLoadingSpinner,
 } from '@elastic/eui';
 import { TodoItem, TodoPriority } from '../../../common/types';
 
@@ -12,6 +13,7 @@ interface TodoCardProps {
   todo: TodoItem;
   onEdit: () => void;
   onArchive: () => void;
+  isPending?: boolean;
 }
 
 const PRIORITY_CONFIG: Record<TodoPriority, { icon: string; className: string }> = {
@@ -25,6 +27,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   todo,
   onEdit,
   onArchive,
+  isPending = false,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
 
@@ -77,7 +80,12 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   };
 
   return (
-    <div className="todo-card" onClick={handleCardClick}>
+    <div className={`todo-card ${isPending ? 'todo-card--pending' : ''}`} onClick={handleCardClick}>
+      {isPending && (
+        <div className="todo-card__loading">
+          <EuiLoadingSpinner size="s" />
+        </div>
+      )}
       {todo.coverImage && (
         <img
           className="todo-card__cover"

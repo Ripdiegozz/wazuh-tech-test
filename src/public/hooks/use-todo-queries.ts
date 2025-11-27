@@ -6,6 +6,7 @@ import {
   TodoSearchParams, 
   CreateTodoRequest, 
   UpdateTodoRequest,
+  PaginatedResponse,
 } from '../../common/types';
 
 // ============================================
@@ -32,6 +33,9 @@ export interface StoreActions {
   removeTodo: (id: string) => void;
   setLoading: (loading: boolean) => void;
   closeModal: () => void;
+  // Pending state actions
+  addPendingId: (id: string) => void;
+  removePendingId: (id: string) => void;
 }
 
 // ============================================
@@ -47,6 +51,8 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
     removeTodo,
     setLoading,
     closeModal,
+    addPendingId,
+    removePendingId,
   } = storeActions;
 
   // ============================================
@@ -76,9 +82,8 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
           setLoading(false);
         }
       },
-      staleTime: 10000, // 10 seconds - refresh more often
+      staleTime: 0, // Always refetch when query changes
       refetchOnWindowFocus: true,
-      keepPreviousData: false, // Don't show stale data while loading new
     });
   };
 
@@ -150,15 +155,18 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       mutationFn: ({ id, data }: { id: string; data: UpdateTodoRequest }) => 
         api.updateTodo(id, data),
       onMutate: async ({ id, data }) => {
+        addPendingId(id); // Mark as pending
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
         updateTodoInStore(id, data as Partial<TodoItem>);
       },
-      onSuccess: () => {
+      onSuccess: (_, { id }) => {
+        removePendingId(id); // Clear pending state
         closeModal();
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
-      onError: () => {
+      onError: (_, { id }) => {
+        removePendingId(id); // Clear pending state on error
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
       },
     });
@@ -173,13 +181,19 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
     return useMutation({
       mutationFn: (id: string) => api.deleteTodo(id),
       onMutate: async (id) => {
+        addPendingId(id);
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
         removeTodo(id);
       },
-      onSuccess: () => {
+      onSuccess: (_, id) => {
+        removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
+      },
+      onError: (_, id) => {
+        removePendingId(id);
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
       },
     });
   };
@@ -193,12 +207,18 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
     return useMutation({
       mutationFn: (id: string) => api.archiveTodo(id),
       onMutate: async (id) => {
+        addPendingId(id);
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
         removeTodo(id);
       },
-      onSuccess: () => {
+      onSuccess: (_, id) => {
+        removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
+      },
+      onError: (_, id) => {
+        removePendingId(id);
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
       },
     });
   };
@@ -211,9 +231,16 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
 
     return useMutation({
       mutationFn: (id: string) => api.restoreTodo(id),
-      onSuccess: () => {
+      onMutate: (id) => {
+        addPendingId(id);
+      },
+      onSuccess: (_, id) => {
+        removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
+      },
+      onError: (_, id) => {
+        removePendingId(id);
       },
     });
   };
@@ -228,12 +255,18 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       mutationFn: ({ id, status }: { id: string; status: string }) =>
         api.updateTodo(id, { status: status as any }),
       onMutate: async ({ id, status }) => {
+        addPendingId(id);
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
         updateTodoInStore(id, { status: status as any });
       },
-      onSuccess: () => {
+      onSuccess: (_, { id }) => {
+        removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
+      },
+      onError: (_, { id }) => {
+        removePendingId(id);
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
       },
     });
   };

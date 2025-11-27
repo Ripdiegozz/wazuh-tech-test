@@ -82,8 +82,15 @@ export const TodoModal: React.FC<TodoModalProps> = ({
     setTags([...tags, newTag]);
   };
 
+  // Prevent closing modal during loading (ESC key, click outside)
+  const handleClose = () => {
+    if (!isLoading) {
+      onClose();
+    }
+  };
+
   return (
-    <EuiModal onClose={onClose} maxWidth={600}>
+    <EuiModal onClose={handleClose} maxWidth={600}>
       <EuiModalHeader>
         <EuiModalHeaderTitle>Create Work Item</EuiModalHeaderTitle>
       </EuiModalHeader>
@@ -202,12 +209,17 @@ export const TodoModal: React.FC<TodoModalProps> = ({
       </EuiModalBody>
 
       <EuiModalFooter>
-        <EuiButtonEmpty onClick={onClose}>Cancel</EuiButtonEmpty>
+        <EuiButtonEmpty 
+          onClick={handleClose}
+          isDisabled={isLoading}
+        >
+          Cancel
+        </EuiButtonEmpty>
         <EuiButton
           fill
           onClick={handleSubmit}
           isLoading={isLoading}
-          disabled={!title.trim()}
+          disabled={!title.trim() || isLoading}
         >
           Create
         </EuiButton>
