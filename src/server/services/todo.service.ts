@@ -60,11 +60,14 @@ const createFilterBuilder = (): FilterBuilder => {
 
     addMatch(fields: string[], query: string, boost?: Record<string, number>) {
       if (query && query.trim()) {
+        const normalizedQuery = query.trim().toLowerCase();
         const fieldsWithBoost = fields.map(f => boost?.[f] ? `${f}^${boost[f]}` : f);
         must.push({
           multi_match: {
-            query,
+            query: normalizedQuery,
             fields: fieldsWithBoost,
+            type: 'phrase_prefix',
+            operator: 'or',
           },
         });
       }
@@ -210,8 +213,9 @@ export class TodoService {
     } = params;
 
     // Build filters using the filter builder
+    // Search in title and description (text fields) - tags is keyword type and handled separately
     const { must, filter } = createFilterBuilder()
-      .addMatch(['title', 'description', 'tags'], query || '', { title: 2 })
+      .addMatch(['title', 'description'], query || '', { title: 2, description: 1 })
       .addTerm('archived', archived)
       .addTerm('assignee', assignee)
       .addTerms('status', status)

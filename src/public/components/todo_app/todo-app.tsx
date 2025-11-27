@@ -509,6 +509,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
           onClose={closeDetailPanel}
           onUpdate={async (id, updates) => {
             await updateMutation.mutateAsync({ id, data: updates });
+            notifications.toasts.addSuccess('Task updated');
           }}
           onArchive={handleArchiveTodo}
           onDelete={handleDeleteTodo}
