@@ -16,12 +16,15 @@ import {
   EuiPopover,
   EuiText,
   EuiSpacer,
+  EuiLink,
+  EuiTourStep,
 } from '@elastic/eui';
 import { CoreStart } from '../../../../../../src/core/public';
 import { NavigationPublicPluginStart } from '../../../../../../src/plugins/navigation/public';
 import { createTodoHooks, StoreActions } from '../../hooks';
 import { useTodoStore } from '../../stores';
 import { useKeyboardShortcuts, KEYBOARD_SHORTCUTS_HELP, SEARCH_INPUT_ID, useDebouncedSearch } from '../../hooks';
+import { useTodoTour } from './shared';
 import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
 import { KanbanBoard } from './kanban-board';
 import { TableView } from './table-view';
@@ -70,6 +73,9 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
 }) => {
   const [isShortcutsOpen, setIsShortcutsOpen] = React.useState(false);
   const [priorityFilter, setPriorityFilter] = React.useState<string>('all');
+  
+  // Tour state
+  const { tourSteps, actions: tourActions, isTourActive } = useTodoTour();
   
   // Get store state and actions
   const store = useTodoStore();
@@ -301,15 +307,32 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   return (
     <div className="todo-app">
       {/* Header */}
-      <header className="todo-app__header">
-        <h1>
-          <EuiIcon type="listAdd" size="l" />
-          Security TODO Manager
-        </h1>
-      </header>
+      <EuiTourStep
+        {...tourSteps.step1}
+        footerAction={
+          <EuiButton size="s" color="primary" onClick={() => tourActions.goToStep(2)}>
+            Next
+          </EuiButton>
+        }
+      >
+        <header className="todo-app__header">
+          <h1>
+            <EuiIcon type="listAdd" size="l" />
+            Security TODO Manager
+          </h1>
+        </header>
+      </EuiTourStep>
 
       {/* Navigation Tabs */}
-      <nav className="todo-app__nav">
+      <EuiTourStep
+        {...tourSteps.step3}
+        footerAction={
+          <EuiButton size="s" color="primary" onClick={() => tourActions.goToStep(4)}>
+            Next
+          </EuiButton>
+        }
+      >
+        <nav className="todo-app__nav">
         <button
           className={`todo-app__nav-tab ${currentView === 'board' ? 'todo-app__nav-tab--active' : ''}`}
           onClick={() => setView('board')}
@@ -389,25 +412,44 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 <EuiSpacer size="xs" />
               </div>
             ))}
+            <EuiSpacer size="m" />
+            <EuiLink
+              onClick={() => {
+                tourActions.resetTour();
+                setIsShortcutsOpen(false);
+              }}
+            >
+              <EuiIcon type="training" size="s" /> Restart app tour
+            </EuiLink>
           </div>
         </EuiPopover>
       </nav>
+      </EuiTourStep>
 
       {/* Content */}
       <main className="todo-app__content">
         {/* Toolbar - only for board and table views */}
         {currentView !== 'archived' && currentView !== 'stats' && (
           <div className="todo-toolbar">
-            <div className="todo-toolbar__search">
-              <EuiFieldSearch
-                id={SEARCH_INPUT_ID}
-                placeholder="Search work... [/]"
-                value={filters.query}
-                onChange={(e) => setFilters({ query: e.target.value })}
-                isClearable
-                fullWidth
-              />
-            </div>
+            <EuiTourStep
+              {...tourSteps.step4}
+              footerAction={
+                <EuiButton size="s" color="primary" onClick={() => tourActions.goToStep(5)}>
+                  Next
+                </EuiButton>
+              }
+            >
+              <div className="todo-toolbar__search">
+                <EuiFieldSearch
+                  id={SEARCH_INPUT_ID}
+                  placeholder="Search work... [/]"
+                  value={filters.query}
+                  onChange={(e) => setFilters({ query: e.target.value })}
+                  isClearable
+                  fullWidth
+                />
+              </div>
+            </EuiTourStep>
 
             <div className="todo-toolbar__filters">
               <EuiFilterGroup>
@@ -430,13 +472,22 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 valueOfSelected={priorityFilter}
                 onChange={(value) => setPriorityFilter(value)}
               />
-              <EuiButton
-                fill
-                iconType="plus"
-                onClick={openCreateModal}
+              <EuiTourStep
+                {...tourSteps.step2}
+                footerAction={
+                  <EuiButton size="s" color="primary" onClick={() => tourActions.goToStep(3)}>
+                    Next
+                  </EuiButton>
+                }
               >
-                Create
-              </EuiButton>
+                <EuiButton
+                  fill
+                  iconType="plus"
+                  onClick={openCreateModal}
+                >
+                  Create
+                </EuiButton>
+              </EuiTourStep>
             </div>
           </div>
         )}
@@ -451,16 +502,25 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
         ) : (
           <>
             {currentView === 'board' && (
-              <KanbanBoard
-                todosByStatus={todosByStatus}
-                statusLabels={STATUS_LABELS}
-                onEditTodo={openDetailPanel}
-                onStatusChange={handleStatusChange}
-                onArchiveTodo={handleArchiveTodo}
-                onDeleteTodo={handleDeleteTodo}
-                onCreateInStatus={openCreateModal}
-                isPending={isPending}
-              />
+              <EuiTourStep
+                {...tourSteps.step5}
+                footerAction={
+                  <EuiButton size="s" color="primary" onClick={() => tourActions.finishTour()}>
+                    Get Started!
+                  </EuiButton>
+                }
+              >
+                <KanbanBoard
+                  todosByStatus={todosByStatus}
+                  statusLabels={STATUS_LABELS}
+                  onEditTodo={openDetailPanel}
+                  onStatusChange={handleStatusChange}
+                  onArchiveTodo={handleArchiveTodo}
+                  onDeleteTodo={handleDeleteTodo}
+                  onCreateInStatus={openCreateModal}
+                  isPending={isPending}
+                />
+              </EuiTourStep>
             )}
             {currentView === 'table' && (
               <TableView
@@ -515,6 +575,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
           onDelete={handleDeleteTodo}
         />
       )}
+
     </div>
   );
 };
