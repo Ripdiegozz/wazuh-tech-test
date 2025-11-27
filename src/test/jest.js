@@ -7,13 +7,14 @@ module.exports = {
   testMatch: ['**/*.test.{ts,tsx}'],
   setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
   moduleNameMapper: {
-    '^@elastic/eui$': '<rootDir>/../../node_modules/@elastic/eui',
-    '^@elastic/eui/(.*)$': '<rootDir>/../../node_modules/@elastic/eui/$1',
+    '^@elastic/eui$': '<rootDir>/node_modules/@elastic/eui',
+    '^@elastic/eui/(.*)$': '<rootDir>/node_modules/@elastic/eui/$1',
+    '^@opensearch/datemath$': '<rootDir>/test/__mocks__/datemath.js',
     '\\.(css|scss)$': 'identity-obj-proxy',
   },
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: '<rootDir>/tsconfig.json',
+      tsconfig: '<rootDir>/tsconfig.test.json',
     }],
   },
   transformIgnorePatterns: [
