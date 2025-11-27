@@ -569,7 +569,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
           onClose={closeDetailPanel}
           onUpdate={async (id, updates) => {
             await updateMutation.mutateAsync({ id, data: updates });
-            notifications.toasts.addSuccess('Task updated');
+            // No toast for inline edits - visual feedback is sufficient
           }}
           onArchive={handleArchiveTodo}
           onDelete={handleDeleteTodo}
