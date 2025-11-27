@@ -1,0 +1,82 @@
+// ============================================
+// Table View
+// ============================================
+
+.todo-table {
+  background: $euiColorEmptyShade;
+  border-radius: $euiBorderRadius;
+  border: $euiBorderThin;
+  overflow: hidden;
+
+  &__header {
+    padding: $euiSizeM;
+    border-bottom: $euiBorderThin;
+    background: $euiColorLightestShade;
+
+    h3 {
+      @include euiTitle('xs');
+      margin: 0;
+    }
+  }
+
+  &__footer {
+    padding: $euiSizeS $euiSizeM;
+    border-top: $euiBorderThin;
+    color: $euiColorMediumShade;
+    font-size: $euiFontSizeXS;
+    background: $euiColorLightestShade;
+  }
+
+  // Work item cell styles
+  &__work-cell {
+    display: flex;
+    align-items: center;
+    gap: $euiSizeS;
+
+    // Pending state - shows spinner and dims content
+    &--pending {
+      opacity: 0.6;
+      
+      .euiLink {
+        pointer-events: none;
+      }
+    }
+  }
+
+  &__work-id {
+    color: $euiColorMediumShade;
+    font-family: $euiCodeFontFamily;
+    font-size: $euiFontSizeXS;
+  }
+
+  &__work-title {
+    font-weight: $euiFontWeightMedium;
+    color: $euiColorPrimaryText;
+    margin-left: $euiSizeS;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  // Assignee cell
+  &__assignee {
+    display: flex;
+    align-items: center;
+    gap: $euiSizeS;
+  }
+
+  &__assignee-avatar {
+    width: $euiSizeL;
+    height: $euiSizeL;
+    border-radius: 50%;
+    background: $euiColorVis0;
+    color: $euiColorEmptyShade;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $euiFontSizeXS;
+    font-weight: $euiFontWeightSemiBold;
+  }
+}
+
