@@ -72,8 +72,13 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   ];
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't trigger edit if clicking on popover button
-    if ((e.target as HTMLElement).closest('.euiButtonIcon')) {
+    // Don't trigger edit if clicking on popover button or context menu
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('.euiButtonIcon') ||
+      target.closest('.euiContextMenu') ||
+      target.closest('.euiPopover__panel')
+    ) {
       return;
     }
     onEdit();

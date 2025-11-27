@@ -209,12 +209,14 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       onMutate: async (id) => {
         addPendingId(id);
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
-        removeTodo(id);
       },
       onSuccess: (_, id) => {
+        // Remove from store after successful archive
+        removeTodo(id);
         removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
+        queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
       onError: (_, id) => {
         removePendingId(id);
