@@ -387,6 +387,10 @@ export class TodoService {
       index: TODO_INDEX_NAME,
       body: {
         size: 0,
+        // Only include non-archived items in statistics
+        query: {
+          term: { archived: false },
+        },
         aggs: {
           by_status: { 
             terms: { field: 'status' } 
@@ -399,15 +403,6 @@ export class TodoService {
           },
           completed_items: {
             filter: { term: { status: 'completed_success' } },
-            aggs: {
-              avg_completion_time: {
-                avg: {
-                  script: {
-                    source: "if (doc['completedAt'].size() != 0 && doc['createdAt'].size() != 0) { return doc['completedAt'].value.toInstant().toEpochMilli() - doc['createdAt'].value.toInstant().toEpochMilli() } else { return 0 }",
-                  },
-                },
-              },
-            },
           },
           overdue_items: {
             filter: {
@@ -432,9 +427,6 @@ export class TodoService {
       byPriority: this.aggregationToRecord(aggs.by_priority),
       byComplianceStandard: this.aggregationToRecord(aggs.by_compliance_standard),
       completionRate: total > 0 ? (aggs.completed_items.doc_count / total) * 100 : 0,
-      averageCompletionTime: aggs.completed_items.avg_completion_time.value 
-        ? aggs.completed_items.avg_completion_time.value / (1000 * 60 * 60) 
-        : 0,
       overdueCount: aggs.overdue_items.doc_count,
     };
   }

@@ -1,0 +1,80 @@
+// ============================================
+// States - Empty, Archived & Drag-Drop
+// ============================================
+
+// Empty State
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $euiSizeXXL $euiSizeL;
+  text-align: center;
+
+  &__icon {
+    width: 120px;
+    height: 120px;
+    margin-bottom: $euiSizeL;
+    opacity: 0.5;
+  }
+
+  &__title {
+    @include euiTitle('m');
+    margin-bottom: $euiSizeS;
+  }
+
+  &__description {
+    @include euiText;
+    color: $euiColorMediumShade;
+    margin-bottom: $euiSizeL;
+    max-width: 400px;
+  }
+}
+
+// Stats Empty State
+.stats-empty {
+  text-align: center;
+  padding: $euiSizeXXL;
+  
+  .euiIcon {
+    margin-bottom: $euiSizeL;
+    opacity: 0.5;
+  }
+  
+  h3 {
+    margin: 0 0 $euiSizeS;
+    font-weight: 600;
+  }
+  
+  p {
+    margin: 0;
+  }
+}
+
+// Archived View
+.archived-view {
+  &__container {
+    background: $euiColorEmptyShade;
+    border-radius: $euiBorderRadius;
+    border: $euiBorderThin;
+  }
+
+  &__empty {
+    background: $euiColorLightestShade;
+    border-radius: $euiBorderRadius;
+    padding: $euiSizeXXL $euiSizeL;
+    text-align: center;
+  }
+}
+
+// Drag and Drop
+.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
+
+.drop-target {
+  background: transparentize($euiColorPrimary, 0.95);
+  border: 2px dashed $euiColorPrimary;
+}
+

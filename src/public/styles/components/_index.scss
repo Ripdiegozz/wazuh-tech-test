@@ -1,0 +1,21 @@
+// ============================================
+// Components Index
+// ============================================
+
+
+// Base styles, variables, and animations
+@import 'base';
+
+// Layout components
+@import 'layout';
+
+// Feature components
+@import 'kanban';
+@import 'cards';
+@import 'table';
+@import 'detail-panel';
+@import 'stats';
+
+// State styles (empty, archived, drag-drop)
+@import 'states';
+

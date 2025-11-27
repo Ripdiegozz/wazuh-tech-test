@@ -1,0 +1,133 @@
+// ============================================
+// Kanban Board & Columns
+// ============================================
+
+// Kanban Board Container
+.kanban-board {
+  display: flex;
+  gap: $euiSizeM;
+  // Note: overflow-x removed to avoid nested scroll container warning from react-beautiful-dnd
+  // The parent container (.todo-app__content) handles horizontal scroll if needed
+  padding-bottom: $euiSizeM;
+  min-width: min-content; // Ensures columns don't shrink below their min-width
+  min-height: calc(100vh - 250px);
+
+  &::-webkit-scrollbar {
+    height: $euiSizeS;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $euiColorLightestShade;
+    border-radius: $euiBorderRadius;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $euiColorMediumShade;
+    border-radius: $euiBorderRadius;
+
+    &:hover {
+      background: $euiColorDarkShade;
+    }
+  }
+}
+
+// Kanban Column
+.kanban-column {
+  min-width: 300px;
+  max-width: 300px;
+  background: $euiColorLightestShade;
+  border-radius: $euiBorderRadius;
+  display: flex;
+  flex-direction: column;
+  border: $euiBorderThin;
+
+  &__header {
+    padding: $euiSizeM;
+    border-bottom: $euiBorderThin;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h3 {
+      @include euiTitle('xs');
+      display: flex;
+      align-items: center;
+      gap: $euiSizeS;
+    }
+  }
+
+  &__count {
+    background: $euiColorLightShade;
+    color: $euiColorDarkShade;
+    padding: 2px $euiSizeS;
+    border-radius: $euiBorderRadiusSmall;
+    font-size: $euiFontSizeXS;
+    font-weight: $euiFontWeightMedium;
+  }
+
+  &__cards {
+    flex: 1;
+    padding: $euiSizeS;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: $euiSizeS;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: $euiColorMediumShade;
+      border-radius: $euiBorderRadiusSmall;
+    }
+  }
+
+  &__add-btn {
+    margin: $euiSizeS;
+    padding: $euiSizeS;
+    background: transparent;
+    border: 2px dashed $euiColorMediumShade;
+    border-radius: $euiBorderRadius;
+    color: $euiColorMediumShade;
+    cursor: pointer;
+    transition: all $euiAnimSpeedFast ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $euiSizeS;
+    font-size: $euiFontSizeS;
+
+    &:hover {
+      border-color: $euiColorPrimary;
+      color: $euiColorPrimary;
+      background: transparentize($euiColorPrimary, 0.95);
+    }
+  }
+
+  // Column color variants using EUI colors
+  &--planned .kanban-column__header {
+    border-left: 4px solid $euiColorVis1;
+  }
+
+  &--in_progress .kanban-column__header {
+    border-left: 4px solid $euiColorPrimary;
+  }
+
+  &--blocked .kanban-column__header {
+    border-left: 4px solid $euiColorWarning;
+  }
+
+  &--completed_success .kanban-column__header {
+    border-left: 4px solid $euiColorSuccess;
+  }
+
+  &--completed_error .kanban-column__header {
+    border-left: 4px solid $euiColorDanger;
+  }
+}
+

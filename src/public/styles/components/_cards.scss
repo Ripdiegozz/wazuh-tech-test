@@ -1,0 +1,152 @@
+// ============================================
+// Todo Cards & Priority Indicators
+// ============================================
+
+// Todo Card
+.todo-card {
+  background: $euiColorEmptyShade;
+  border-radius: $euiBorderRadius;
+  padding: $euiSizeS;
+  cursor: pointer;
+  transition: all $euiAnimSpeedFast ease;
+  border: $euiBorderThin;
+  position: relative;
+  animation: fadeIn $euiAnimSpeedNormal ease;
+  @include euiBottomShadowSmall;
+
+  &:hover {
+    border-color: $euiColorPrimary;
+    @include euiBottomShadowMedium;
+  }
+
+  // Pending state - shows when item is being updated
+  &--pending {
+    opacity: 0.7;
+    pointer-events: none;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba($euiColorEmptyShade, 0.3);
+      border-radius: $euiBorderRadius;
+    }
+  }
+
+  &__loading {
+    position: absolute;
+    top: $euiSizeS;
+    right: $euiSizeS;
+    z-index: 1;
+  }
+
+  &__cover {
+    width: 100%;
+    height: 120px;
+    border-radius: $euiBorderRadiusSmall;
+    margin-bottom: $euiSizeS;
+    object-fit: cover;
+    background: $euiColorLightShade;
+  }
+
+  &__title {
+    @include euiText;
+    font-weight: $euiFontWeightMedium;
+    margin-bottom: $euiSizeXS;
+    line-height: 1.4;
+  }
+
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $euiSizeXS;
+    margin-bottom: $euiSizeXS;
+  }
+
+  &__tag {
+    font-size: $euiFontSizeXS;
+    padding: 2px $euiSizeS;
+    border-radius: $euiBorderRadiusSmall;
+    background: $euiColorVis0;
+    color: $euiColorEmptyShade;
+    font-weight: $euiFontWeightMedium;
+
+    &:nth-child(2n) {
+      background: $euiColorVis1;
+    }
+
+    &:nth-child(3n) {
+      background: $euiColorVis2;
+    }
+
+    &--overflow {
+      background: $euiColorMediumShade;
+    }
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: $euiSizeS;
+  }
+
+  &__id {
+    font-size: $euiFontSizeXS;
+    color: $euiColorMediumShade;
+    font-family: $euiCodeFontFamily;
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    gap: $euiSizeXS;
+  }
+
+  &__story-points {
+    background: $euiColorLightShade;
+    color: $euiColorDarkShade;
+    padding: 2px $euiSizeXS;
+    border-radius: $euiBorderRadiusSmall;
+    font-size: $euiFontSizeXS;
+    font-weight: $euiFontWeightSemiBold;
+  }
+
+  &__assignee {
+    width: $euiSizeL;
+    height: $euiSizeL;
+    border-radius: 50%;
+    background: $euiColorVis0;
+    color: $euiColorEmptyShade;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $euiFontSizeXS;
+    font-weight: $euiFontWeightSemiBold;
+    margin-left: auto;
+  }
+}
+
+// Priority Indicators
+.priority-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: $euiSizeXS;
+
+  &--low {
+    color: $euiColorMediumShade;
+  }
+
+  &--medium {
+    color: $euiColorPrimary;
+  }
+
+  &--high {
+    color: $euiColorWarning;
+  }
+
+  &--critical {
+    color: $euiColorDanger;
+  }
+}
+

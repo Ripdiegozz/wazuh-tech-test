@@ -1,10 +1,11 @@
-import React from 'react';
+import * as React from 'react';
 import {
   EuiIcon,
   EuiToolTip,
   EuiContextMenu,
   EuiPopover,
   EuiButtonIcon,
+  EuiLoadingSpinner,
 } from '@elastic/eui';
 import { TodoItem, TodoPriority } from '../../../common/types';
 
@@ -12,6 +13,7 @@ interface TodoCardProps {
   todo: TodoItem;
   onEdit: () => void;
   onArchive: () => void;
+  isPending?: boolean;
 }
 
 const PRIORITY_CONFIG: Record<TodoPriority, { icon: string; className: string }> = {
@@ -25,6 +27,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   todo,
   onEdit,
   onArchive,
+  isPending = false,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
 
@@ -69,15 +72,25 @@ export const TodoCard: React.FC<TodoCardProps> = ({
   ];
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't trigger edit if clicking on popover button
-    if ((e.target as HTMLElement).closest('.euiButtonIcon')) {
+    // Don't trigger edit if clicking on popover button or context menu
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('.euiButtonIcon') ||
+      target.closest('.euiContextMenu') ||
+      target.closest('.euiPopover__panel')
+    ) {
       return;
     }
     onEdit();
   };
 
   return (
-    <div className="todo-card" onClick={handleCardClick}>
+    <div className={`todo-card ${isPending ? 'todo-card--pending' : ''}`} onClick={handleCardClick}>
+      {isPending && (
+        <div className="todo-card__loading">
+          <EuiLoadingSpinner size="s" />
+        </div>
+      )}
       {todo.coverImage && (
         <img
           className="todo-card__cover"

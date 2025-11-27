@@ -1,0 +1,42 @@
+// ============================================
+// Base Styles - Imports, Variables & Animations
+// ============================================
+// This file contains EUI imports and shared animations
+
+@import '@elastic/eui/src/global_styling/variables/index';
+@import '@elastic/eui/src/global_styling/mixins/index';
+
+// ============================================
+// Animations
+// ============================================
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY($euiSizeS);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-$euiSizeM);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+

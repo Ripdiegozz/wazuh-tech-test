@@ -1,0 +1,141 @@
+// ============================================
+// Todo Detail Panel (Flyout)
+// ============================================
+
+.todo-detail-panel {
+  .euiFlyoutHeader {
+    background: $euiColorLightestShade;
+  }
+
+  .euiFlyoutBody__overflowContent {
+    padding: $euiSizeM;
+  }
+}
+
+.todo-detail {
+  &__title-editable {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: $euiSizeS;
+
+    &:hover {
+      .todo-detail__edit-icon {
+        opacity: 1;
+      }
+    }
+  }
+
+  &__edit-icon {
+    opacity: 0;
+    transition: opacity $euiAnimSpeedFast ease;
+    color: $euiColorMediumShade;
+  }
+
+  &__placeholder {
+    color: $euiColorMediumShade;
+    font-style: italic;
+  }
+
+  &__fields {
+    background: $euiColorLightestShade;
+    border-radius: $euiBorderRadius;
+    padding: $euiSizeS;
+  }
+
+  &__field-row {
+    display: flex;
+    align-items: center;
+    padding: $euiSizeS 0;
+    border-bottom: 1px solid $euiColorLightShade;
+    min-height: 40px;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__field-label {
+    width: 110px;
+    min-width: 110px;
+    font-size: $euiFontSizeXS;
+    color: $euiColorDarkShade;
+  }
+
+  &__field-value {
+    display: inline-flex;
+    align-items: center;
+
+    // SuperSelect - prevent full width
+    .euiSuperSelect {
+      width: auto !important;
+    }
+
+    .euiSuperSelectControl {
+      width: auto !important;
+      min-width: 100px;
+      max-width: 150px;
+    }
+
+    // Combo box styling
+    .euiComboBox {
+      width: 220px;
+    }
+
+    // Date picker
+    .euiFormControlLayout {
+      width: auto;
+    }
+
+    .euiDatePicker {
+      width: 180px;
+    }
+  }
+
+  &__inline-value {
+    display: flex;
+    align-items: center;
+    gap: $euiSizeXS;
+    padding: $euiSizeXS $euiSizeS;
+    border-radius: $euiBorderRadius;
+    cursor: pointer;
+    transition: background $euiAnimSpeedFast ease;
+    min-height: 32px;
+
+    &:hover {
+      background: $euiColorLightShade;
+
+      .todo-detail__edit-icon {
+        opacity: 1;
+      }
+    }
+  }
+
+  &__date-picker {
+    max-width: 200px;
+  }
+
+  &__description {
+    padding: $euiSizeS;
+    border-radius: $euiBorderRadius;
+    cursor: pointer;
+    transition: background $euiAnimSpeedFast ease;
+    position: relative;
+    min-height: 60px;
+
+    &:hover {
+      background: $euiColorLightShade;
+
+      .todo-detail__edit-icon {
+        opacity: 1;
+      }
+    }
+
+    .todo-detail__edit-icon {
+      position: absolute;
+      top: $euiSizeS;
+      right: $euiSizeS;
+    }
+  }
+}
+

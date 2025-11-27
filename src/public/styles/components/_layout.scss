@@ -1,0 +1,104 @@
+// ============================================
+// Layout - App Container, Navigation & Toolbar
+// ============================================
+
+// Main App Container
+.todo-app {
+  min-height: 100vh;
+  background: $euiColorEmptyShade;
+
+  &__header {
+    padding: $euiSizeM $euiSizeL;
+    background: $euiColorLightestShade;
+    border-bottom: $euiBorderThin;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h1 {
+      @include euiTitle('m');
+      display: flex;
+      align-items: center;
+      gap: $euiSizeS;
+    }
+  }
+
+  &__nav {
+    background: $euiColorLightestShade;
+    padding: 0 $euiSizeL;
+    border-bottom: $euiBorderThin;
+    display: flex;
+    align-items: center;
+    gap: $euiSizeXS;
+  }
+
+  &__nav-tab {
+    padding: $euiSizeS $euiSizeM;
+    font-size: $euiFontSizeS;
+    font-weight: $euiFontWeightMedium;
+    color: $euiColorMediumShade;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all $euiAnimSpeedFast ease;
+    display: flex;
+    align-items: center;
+    gap: $euiSizeS;
+
+    &:hover {
+      color: $euiColorDarkShade;
+      background: $euiColorLightShade;
+    }
+
+    &--active {
+      color: $euiColorPrimary;
+      border-bottom-color: $euiColorPrimary;
+    }
+  }
+
+  &__nav-badge {
+    margin-left: $euiSizeXS;
+    background: $euiColorDanger;
+    color: $euiColorEmptyShade;
+    padding: 2px $euiSizeS;
+    border-radius: $euiBorderRadiusSmall;
+    font-size: $euiFontSizeXS;
+  }
+
+  &__content {
+    padding: $euiSizeL;
+    overflow-x: auto; // Handle horizontal scroll for kanban board
+  }
+}
+
+// Toolbar
+.todo-toolbar {
+  display: flex;
+  align-items: center;
+  gap: $euiSizeM;
+  margin-bottom: $euiSizeL;
+  flex-wrap: wrap;
+
+  &__search {
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+  }
+
+  &__filters {
+    display: flex;
+    gap: $euiSizeS;
+    flex-wrap: wrap;
+  }
+
+  &__actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: $euiSizeM;
+    display: flex;
+    gap: $euiSizeS;
+  }
+}
+

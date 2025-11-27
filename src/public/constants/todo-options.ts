@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { EuiBadge } from '@elastic/eui';
 import { TodoStatus, TodoPriority, ComplianceStandard } from '../../common/types';
 

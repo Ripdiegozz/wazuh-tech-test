@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import {
   EuiBasicTable,
   EuiBasicTableColumn,
@@ -11,6 +12,7 @@ import {
   EuiText,
   EuiEmptyPrompt,
   EuiConfirmModal,
+  EuiLoadingSpinner,
 } from '@elastic/eui';
 import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
 
@@ -18,6 +20,7 @@ interface ArchivedViewProps {
   todos: TodoItem[];
   onRestoreTodo: (id: string) => void;
   onDeleteTodo: (id: string) => void;
+  isPending?: (id: string) => boolean;
 }
 
 const STATUS_LABELS: Record<TodoStatus, string> = {
@@ -47,6 +50,7 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
   todos,
   onRestoreTodo,
   onDeleteTodo,
+  isPending = () => false,
 }) => {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
@@ -81,15 +85,22 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
       field: 'id',
       name: 'Work',
       width: '350px',
-      render: (id: string, todo: TodoItem) => (
-        <div className="todo-table__work-cell">
-          <EuiIcon type="folderClosed" color="subdued" />
-          <span>
-            <span className="todo-table__work-id">{formatId(id)}</span>
-            <span className="todo-table__work-title">{todo.title}</span>
-          </span>
-        </div>
-      ),
+      render: (id: string, todo: TodoItem) => {
+        const pending = isPending(id);
+        return (
+          <div className={`todo-table__work-cell ${pending ? 'todo-table__work-cell--pending' : ''}`}>
+            {pending ? (
+              <EuiLoadingSpinner size="s" />
+            ) : (
+              <EuiIcon type="folderClosed" color="subdued" />
+            )}
+            <span>
+              <span className="todo-table__work-id">{formatId(id)}</span>
+              <span className="todo-table__work-title">{todo.title}</span>
+            </span>
+          </div>
+        );
+      },
     },
     {
       field: 'priority',
@@ -155,29 +166,35 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
     {
       name: 'Actions',
       width: '200px',
-      render: (todo: TodoItem) => (
-        <EuiFlexGroup gutterSize="s" responsive={false}>
-          <EuiFlexItem grow={false}>
-            <EuiButtonEmpty
-              size="s"
-              iconType="refresh"
-              onClick={() => onRestoreTodo(todo.id)}
-            >
-              Restore
-            </EuiButtonEmpty>
-          </EuiFlexItem>
-          <EuiFlexItem grow={false}>
-            <EuiButtonEmpty
-              size="s"
-              iconType="trash"
-              color="danger"
-              onClick={() => setItemToDelete(todo.id)}
-            >
-              Delete
-            </EuiButtonEmpty>
-          </EuiFlexItem>
-        </EuiFlexGroup>
-      ),
+      render: (todo: TodoItem) => {
+        const pending = isPending(todo.id);
+        return (
+          <EuiFlexGroup gutterSize="s" responsive={false}>
+            <EuiFlexItem grow={false}>
+              <EuiButtonEmpty
+                size="s"
+                iconType={pending ? 'empty' : 'refresh'}
+                onClick={() => onRestoreTodo(todo.id)}
+                isLoading={pending}
+                isDisabled={pending}
+              >
+                Restore
+              </EuiButtonEmpty>
+            </EuiFlexItem>
+            <EuiFlexItem grow={false}>
+              <EuiButtonEmpty
+                size="s"
+                iconType="trash"
+                color="danger"
+                onClick={() => setItemToDelete(todo.id)}
+                isDisabled={pending}
+              >
+                Delete
+              </EuiButtonEmpty>
+            </EuiFlexItem>
+          </EuiFlexGroup>
+        );
+      },
     },
   ];
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import {
   EuiBasicTable,
   EuiBasicTableColumn,
@@ -11,6 +12,7 @@ import {
   EuiSuperSelect,
   EuiText,
   EuiCheckbox,
+  EuiLoadingSpinner,
 } from '@elastic/eui';
 import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
 
@@ -20,6 +22,7 @@ interface TableViewProps {
   onDeleteTodo: (id: string) => void;
   onArchiveTodo: (id: string) => void;
   onStatusChange: (id: string, status: TodoStatus) => void;
+  isPending?: (id: string) => boolean;
 }
 
 const STATUS_OPTIONS = [
@@ -43,6 +46,7 @@ export const TableView: React.FC<TableViewProps> = ({
   onDeleteTodo,
   onArchiveTodo,
   onStatusChange,
+  isPending = () => false,
 }) => {
   const [selectedItems, setSelectedItems] = useState<TodoItem[]>([]);
   const [sortField, setSortField] = useState<keyof TodoItem>('updatedAt');
@@ -78,26 +82,33 @@ export const TableView: React.FC<TableViewProps> = ({
       field: 'id',
       name: 'Work',
       width: '350px',
-      render: (id: string, todo: TodoItem) => (
-        <div className="todo-table__work-cell">
-          <EuiCheckbox
-            id={`checkbox-${id}`}
-            checked={selectedItems.some((item) => item.id === id)}
-            onChange={() => {
-              setSelectedItems((prev) =>
-                prev.some((item) => item.id === id)
-                  ? prev.filter((item) => item.id !== id)
-                  : [...prev, todo]
-              );
-            }}
-          />
-          <EuiIcon type="document" color="subdued" />
-          <EuiLink onClick={() => onEditTodo(todo)}>
-            <span className="todo-table__work-id">{formatId(id)}</span>
-            <span className="todo-table__work-title">{todo.title}</span>
-          </EuiLink>
-        </div>
-      ),
+      render: (id: string, todo: TodoItem) => {
+        const pending = isPending(id);
+        return (
+          <div className={`todo-table__work-cell ${pending ? 'todo-table__work-cell--pending' : ''}`}>
+            {pending ? (
+              <EuiLoadingSpinner size="s" />
+            ) : (
+              <EuiCheckbox
+                id={`checkbox-${id}`}
+                checked={selectedItems.some((item) => item.id === id)}
+                onChange={() => {
+                  setSelectedItems((prev) =>
+                    prev.some((item) => item.id === id)
+                      ? prev.filter((item) => item.id !== id)
+                      : [...prev, todo]
+                  );
+                }}
+              />
+            )}
+            <EuiIcon type="document" color="subdued" />
+            <EuiLink onClick={() => onEditTodo(todo)}>
+              <span className="todo-table__work-id">{formatId(id)}</span>
+              <span className="todo-table__work-title">{todo.title}</span>
+            </EuiLink>
+          </div>
+        );
+      },
     },
     {
       field: 'priority',
