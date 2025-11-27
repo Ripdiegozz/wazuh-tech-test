@@ -1,4 +1,5 @@
 export { TodoApp } from './todo-app';
+export { StatsDashboard } from './stats-dashboard';
 export { KanbanBoard } from './kanban-board';
 export { TableView } from './table-view';
 export { ArchivedView } from './archived-view';

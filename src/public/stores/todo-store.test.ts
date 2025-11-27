@@ -2,7 +2,7 @@
  * Tests for TodoStore (React Context based)
  * Run with: yarn test
  */
-import React from 'react';
+import * as React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { TodoProvider, useTodoStore } from './todo-store';
 import { TodoItem, TodoStatus, TodoPriority } from '../../common/types';

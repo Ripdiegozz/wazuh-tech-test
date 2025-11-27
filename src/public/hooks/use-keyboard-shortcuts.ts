@@ -53,6 +53,11 @@ export const useKeyboardShortcuts = () => {
       action: () => setView('archived'),
       description: 'Switch to Archived view',
     },
+    {
+      key: '4',
+      action: () => setView('stats'),
+      description: 'Switch to Stats view',
+    },
     
     // Actions
     {
@@ -172,6 +177,7 @@ export const KEYBOARD_SHORTCUTS_HELP = [
     { keys: '1', description: 'Board view' },
     { keys: '2', description: 'Table view' },
     { keys: '3', description: 'Archived view' },
+    { keys: '4', description: 'Stats view' },
   ]},
   { category: 'Actions', shortcuts: [
     { keys: 'C', description: 'Create new TODO' },

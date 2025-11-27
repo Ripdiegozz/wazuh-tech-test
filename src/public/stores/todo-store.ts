@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useReducer, useCallback, useMemo } from 'react';
+import * as React from 'react';
+import { createContext, useContext, useReducer, useCallback, useMemo } from 'react';
 import { TodoItem, TodoStatus, TodoPriority, TodoSearchParams } from '../../common/types';
 
 // ============================================
 // Types
 // ============================================
-export type ViewType = 'board' | 'table' | 'archived';
+export type ViewType = 'board' | 'table' | 'archived' | 'stats';
 
 export interface TodoFilters {
   query: string;

@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   EuiIcon,
@@ -21,10 +22,11 @@ import { NavigationPublicPluginStart } from '../../../../../../src/plugins/navig
 import { createTodoHooks, StoreActions } from '../../hooks';
 import { useTodoStore } from '../../stores';
 import { useKeyboardShortcuts, KEYBOARD_SHORTCUTS_HELP, SEARCH_INPUT_ID, useDebouncedSearch } from '../../hooks';
-import { TodoStatus, TodoPriority } from '../../../common/types';
+import { TodoItem, TodoStatus, TodoPriority } from '../../../common/types';
 import { KanbanBoard } from './kanban-board';
 import { TableView } from './table-view';
 import { ArchivedView } from './archived-view';
+import { StatsDashboard } from './stats-dashboard';
 import { TodoModal } from './todo-modal';
 import { TodoDetailPanel } from './todo-detail-panel';
 import '../../styles/todo_app.scss';
@@ -121,6 +123,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   const { 
     useTodos, 
     useArchivedTodos, 
+    useStatistics,
     useCreateTodo, 
     useUpdateTodo, 
     useDeleteTodo, 
@@ -135,12 +138,12 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   
   const { data: todosData, isLoading: todosLoading } = useTodos({
     query: searchQuery,
-    status: filters.status.length > 0 ? filters.status : undefined,
     priority: priorityFilter !== 'all' ? [priorityFilter as TodoPriority] : undefined,
     assignee: filters.assignee || undefined,
   });
   
   const { data: archivedData } = useArchivedTodos();
+  const { data: statisticsData, isLoading: statsLoading } = useStatistics();
   
   const createMutation = useCreateTodo();
   const updateMutation = useUpdateTodo();
@@ -209,7 +212,41 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     }
   };
 
-  const todosByStatus = getTodosByStatus();
+  // Get todos grouped by status, then apply client-side status filtering
+  const allTodosByStatus = getTodosByStatus();
+  
+  // Apply client-side status filter if any status filters are selected
+  const todosByStatus = useMemo(() => {
+    // If no status filters selected, show all statuses
+    if (filters.status.length === 0) {
+      return allTodosByStatus;
+    }
+    
+    // Otherwise, only show the selected statuses (empty arrays for unselected)
+    const filtered: Record<TodoStatus, TodoItem[]> = {
+      [TodoStatus.PLANNED]: [],
+      [TodoStatus.IN_PROGRESS]: [],
+      [TodoStatus.BLOCKED]: [],
+      [TodoStatus.COMPLETED_SUCCESS]: [],
+      [TodoStatus.COMPLETED_ERROR]: [],
+    };
+    
+    filters.status.forEach((status) => {
+      filtered[status] = allTodosByStatus[status] || [];
+    });
+    
+    return filtered;
+  }, [allTodosByStatus, filters.status]);
+
+  // Get flat list of filtered todos for table view
+  const filteredTodos = useMemo(() => {
+    const todos = todosData?.items || [];
+    if (filters.status.length === 0) {
+      return todos;
+    }
+    return todos.filter((todo) => filters.status.includes(todo.status));
+  }, [todosData?.items, filters.status]);
+
   const archivedTodosList = archivedData?.items || archivedTodos || [];
 
   return (
@@ -220,11 +257,52 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
           <EuiIcon type="listAdd" size="l" />
           Security TODO Manager
         </h1>
+      </header>
+
+      {/* Navigation Tabs */}
+      <nav className="todo-app__nav">
+        <button
+          className={`todo-app__nav-tab ${currentView === 'board' ? 'todo-app__nav-tab--active' : ''}`}
+          onClick={() => setView('board')}
+        >
+          <EuiIcon type="visMapRegion" />
+          Board
+          <EuiText size="xs" color="subdued">[1]</EuiText>
+        </button>
+        <button
+          className={`todo-app__nav-tab ${currentView === 'table' ? 'todo-app__nav-tab--active' : ''}`}
+          onClick={() => setView('table')}
+        >
+          <EuiIcon type="visTable" />
+          All Work
+          <EuiText size="xs" color="subdued">[2]</EuiText>
+        </button>
+        <button
+          className={`todo-app__nav-tab ${currentView === 'archived' ? 'todo-app__nav-tab--active' : ''}`}
+          onClick={() => setView('archived')}
+        >
+          <EuiIcon type="folderClosed" />
+          Archived
+          <EuiText size="xs" color="subdued">[3]</EuiText>
+          {archivedTodosList.length > 0 && (
+            <span className="todo-app__nav-badge">
+              {archivedTodosList.length}
+            </span>
+          )}
+        </button>
+        <button
+          className={`todo-app__nav-tab ${currentView === 'stats' ? 'todo-app__nav-tab--active' : ''}`}
+          onClick={() => setView('stats')}
+        >
+          <EuiIcon type="visBarVerticalStacked" />
+          Stats
+          <EuiText size="xs" color="subdued">[4]</EuiText>
+        </button>
         <EuiPopover
           button={
             <EuiToolTip content="Keyboard shortcuts">
               <EuiButtonIcon
-                iconType="keyboard"
+                iconType="keyboardShortcut"
                 aria-label="Keyboard shortcuts"
                 onClick={() => setIsShortcutsOpen(!isShortcutsOpen)}
               />
@@ -264,45 +342,12 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
             ))}
           </div>
         </EuiPopover>
-      </header>
-
-      {/* Navigation Tabs */}
-      <nav className="todo-app__nav">
-        <button
-          className={`todo-app__nav-tab ${currentView === 'board' ? 'todo-app__nav-tab--active' : ''}`}
-          onClick={() => setView('board')}
-        >
-          <EuiIcon type="visMapRegion" />
-          Board
-          <EuiText size="xs" color="subdued">[1]</EuiText>
-        </button>
-        <button
-          className={`todo-app__nav-tab ${currentView === 'table' ? 'todo-app__nav-tab--active' : ''}`}
-          onClick={() => setView('table')}
-        >
-          <EuiIcon type="visTable" />
-          All Work
-          <EuiText size="xs" color="subdued">[2]</EuiText>
-        </button>
-        <button
-          className={`todo-app__nav-tab ${currentView === 'archived' ? 'todo-app__nav-tab--active' : ''}`}
-          onClick={() => setView('archived')}
-        >
-          <EuiIcon type="folderClosed" />
-          Archived
-          <EuiText size="xs" color="subdued">[3]</EuiText>
-          {archivedTodosList.length > 0 && (
-            <span className="todo-app__nav-badge">
-              {archivedTodosList.length}
-            </span>
-          )}
-        </button>
       </nav>
 
       {/* Content */}
       <main className="todo-app__content">
         {/* Toolbar - only for board and table views */}
-        {currentView !== 'archived' && (
+        {currentView !== 'archived' && currentView !== 'stats' && (
           <div className="todo-toolbar">
             <div className="todo-toolbar__search">
               <EuiFieldSearch
@@ -322,7 +367,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                     key={status}
                     hasActiveFilters={filters.status.includes(status as TodoStatus)}
                     onClick={() => toggleStatusFilter(status as TodoStatus)}
-                    numFilters={todosByStatus[status as TodoStatus]?.length || 0}
+                    numFilters={allTodosByStatus[status as TodoStatus]?.length || 0}
                   >
                     {label}
                   </EuiFilterButton>
@@ -368,7 +413,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
             )}
             {currentView === 'table' && (
               <TableView
-                todos={todosData?.items || []}
+                todos={filteredTodos}
                 onEditTodo={openDetailPanel}
                 onDeleteTodo={handleDeleteTodo}
                 onArchiveTodo={handleArchiveTodo}
@@ -380,6 +425,12 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 todos={archivedTodosList}
                 onRestoreTodo={handleRestoreTodo}
                 onDeleteTodo={handleDeleteTodo}
+              />
+            )}
+            {currentView === 'stats' && (
+              <StatsDashboard
+                statistics={statisticsData}
+                isLoading={statsLoading}
               />
             )}
           </>
