@@ -9,7 +9,7 @@ Object.defineProperty(global, 'crypto', {
       }
       return arr;
     },
-    randomUUID: () => 'test-uuid-' + Math.random().toString(36).substr(2, 9),
+    randomUUID: () => 'test-uuid-' + Math.random().toString(36).substring(2, 9),
   },
 });
 
