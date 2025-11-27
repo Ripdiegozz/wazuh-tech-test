@@ -72,6 +72,7 @@
 
   &__content {
     padding: $euiSizeL;
+    overflow-x: auto; // Handle horizontal scroll for kanban board
   }
 }
 
@@ -113,8 +114,10 @@
 .kanban-board {
   display: flex;
   gap: $euiSizeM;
-  overflow-x: auto;
+  // Note: overflow-x removed to avoid nested scroll container warning from react-beautiful-dnd
+  // The parent container (.todo-app__content) handles horizontal scroll if needed
   padding-bottom: $euiSizeM;
+  min-width: min-content; // Ensures columns don't shrink below their min-width
   min-height: calc(100vh - 250px);
 
   &::-webkit-scrollbar {
