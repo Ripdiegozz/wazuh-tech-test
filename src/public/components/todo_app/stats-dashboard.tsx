@@ -23,6 +23,7 @@ import {
 } from 'chart.js';
 import euiTheme from '@elastic/eui/dist/oui_theme_light.json';
 import { TodoStatistics, TodoStatus, TodoPriority, ComplianceStandard } from '../../../common/types';
+import { useIsMobile } from '../../hooks';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
@@ -177,21 +178,6 @@ const StatsBarChart: React.FC<{
       <Bar data={chartData} options={options} />
     </div>
   );
-};
-
-// Hook to detect mobile screens
-const useIsMobile = (breakpoint = 480) => {
-  const [isMobile, setIsMobile] = React.useState(
-    typeof window !== 'undefined' ? window.innerWidth <= breakpoint : false
-  );
-
-  React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [breakpoint]);
-
-  return isMobile;
 };
 
 // Pie Chart Component using Chart.js

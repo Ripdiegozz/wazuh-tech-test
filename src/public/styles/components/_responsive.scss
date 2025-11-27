@@ -62,22 +62,56 @@ $breakpoint-l: 1200px;
   }
 
   // Toolbar adjustments for mobile
+  // Layout uses flex-wrap to flow naturally:
   .todo-toolbar {
-    flex-direction: column;
-    align-items: stretch;
+    display: flex;
+    flex-wrap: wrap;
     gap: $euiSizeS;
+    align-items: center;
 
+    // Search takes most of the first row
     &__search {
+      flex: 1 1 200px;
+      min-width: 150px;
       max-width: 100%;
       order: 1;
     }
 
+    // Actions: Priority + Create stay together
+    &__actions {
+      display: flex;
+      align-items: center;
+      gap: $euiSizeS;
+      margin-left: 0;
+      order: 2;
+      flex-shrink: 0;
+      
+      // Priority dropdown - compact
+      .euiSuperSelect {
+        min-width: 100px;
+        max-width: 130px;
+      }
+      
+      // Create button - always visible, compact on mobile
+      .euiButton {
+        white-space: nowrap;
+        padding: $euiSizeS $euiSizeM !important;
+        
+        // Show only icon + text or just icon
+        .euiButton__text {
+          display: inline;
+        }
+      }
+    }
+
+    // Filters: full width row, scrollable
     &__filters {
+      flex: 1 1 100%;
       order: 3;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       padding-bottom: $euiSizeXS;
-      margin: 0 (-$euiSizeS); // Extend to edges
+      margin: 0 (-$euiSizeS);
       padding-left: $euiSizeS;
       padding-right: $euiSizeS;
       
@@ -87,54 +121,53 @@ $breakpoint-l: 1200px;
         display: none;
       }
       
-      // Allow horizontal scroll for filter buttons
+      // Prevent wrap, allow scroll
       .euiFilterGroup {
         flex-wrap: nowrap;
         min-width: max-content;
       }
       
-      // Make filter buttons more compact
+      // Compact filter buttons
       .euiFilterButton {
         white-space: nowrap;
         padding: $euiSizeXS $euiSizeS;
         font-size: $euiFontSizeXS;
-      }
-    }
-
-    &__actions {
-      order: 2;
-      margin-left: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: $euiSizeS;
-      
-      // Priority dropdown - limit width to prevent overflow
-      .euiSuperSelect {
-        min-width: 120px;
-        max-width: 140px;
-      }
-      
-      // Create button stays compact
-      .euiButton {
-        white-space: nowrap;
+        min-height: 36px;
       }
     }
   }
 
-  // Kanban board - single column on very small screens
+  // Kanban board - vertical layout for mobile (better drag&drop UX)
   .kanban-board {
+    display: flex;
     flex-direction: column;
+    gap: $euiSizeM;
     min-height: auto;
-    gap: $euiSizeS;
+    padding-bottom: $euiSizeM;
   }
 
   .kanban-column {
     min-width: 100%;
     max-width: 100%;
     
+    &__header {
+      // Make header sticky for easier navigation
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: inherit;
+    }
+    
     &__cards {
-      max-height: 300px;
+      // Limit card area height to prevent super long columns
+      max-height: 350px;
+      min-height: 100px;
+      overflow-y: auto;
+    }
+    
+    // Add button - always visible
+    &__add-btn {
+      margin-top: $euiSizeXS;
     }
   }
 
@@ -174,7 +207,7 @@ $breakpoint-l: 1200px;
     max-width: 100% !important;
   }
 
-  // TODO 5: Markdown editor - reduced height on mobile
+  // Markdown editor - reduced height on mobile
   .euiMarkdownEditor {
     .euiMarkdownEditorTextArea {
       min-height: 80px !important;
@@ -182,7 +215,7 @@ $breakpoint-l: 1200px;
     }
   }
 
-  // TODO 6: Action buttons - larger tap targets
+  // Action buttons - larger tap targets
   .euiButtonIcon {
     min-width: 40px;
     min-height: 40px;
@@ -200,18 +233,29 @@ $breakpoint-l: 1200px;
     }
   }
 
-  // TODO 8: Modal - full width on mobile
+  // Modal - full screen on mobile
   .euiModal {
-    max-width: calc(100% - #{$euiSizeM * 2}) !important;
-    margin: $euiSizeM !important;
+    width: calc(100% - #{$euiSizeS * 2}) !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - #{$euiSizeL * 2}) !important;
+    margin: $euiSizeS !important;
+    
+    .euiModalHeader {
+      padding: $euiSizeS $euiSizeM !important;
+    }
     
     .euiModalBody {
-      max-height: 60vh;
+      flex: 1;
       overflow-y: auto;
+      padding: $euiSizeS $euiSizeM !important;
+    }
+    
+    .euiModalFooter {
+      padding: $euiSizeS $euiSizeM !important;
     }
   }
 
-  // TODO 9: Stats cards - more compact
+  // Stats cards - more compact
   .stats-card {
     .euiStat__title {
       font-size: 1.75rem !important;
@@ -230,7 +274,7 @@ $breakpoint-l: 1200px;
     }
   }
 
-  // TODO 10: Modal form inputs - stack vertically
+  // Modal form inputs - stack vertically
   .euiModal {
     .euiFlexGroup:not(.euiModalFooter .euiFlexGroup) {
       flex-direction: column;
@@ -246,10 +290,60 @@ $breakpoint-l: 1200px;
       flex-direction: row;
     }
   }
+
+  // Table View - horizontal scroll with fixed columns
+  .todo-table {
+    // Container allows horizontal scroll
+    overflow: visible;
+    
+    .euiTable {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      
+      // Ensure minimum width for readability
+      min-width: 600px;
+    }
+    
+    // Bulk actions - stack buttons if needed
+    &__bulk-actions {
+      .euiFlexGroup {
+        flex-wrap: wrap;
+        gap: $euiSizeXS;
+      }
+      
+      .euiButton {
+        font-size: $euiFontSizeXS;
+        padding: $euiSizeXS $euiSizeS;
+      }
+    }
+    
+    // Compact cells
+    &__work-cell {
+      min-width: 200px;
+    }
+    
+    &__work-title {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  // Archived view - same treatment
+  .archived-view__container {
+    .euiTable {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      min-width: 600px;
+    }
+  }
 }
 
 // Small devices (landscape phones, tablets, 481px - 768px)
-@media (min-width: $breakpoint-xs + 1) and (max-width: $breakpoint-s) {
+@media (min-width: #{$breakpoint-xs + 1}) and (max-width: $breakpoint-s) {
   .todo-app {
     &__header {
       padding: $euiSizeS $euiSizeM;
@@ -310,7 +404,7 @@ $breakpoint-l: 1200px;
 }
 
 // Medium devices (tablets, small laptops, 769px - 992px)
-@media (min-width: $breakpoint-s + 1) and (max-width: $breakpoint-m) {
+@media (min-width: #{$breakpoint-s + 1}) and (max-width: $breakpoint-m) {
   .kanban-board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -380,9 +474,6 @@ $breakpoint-l: 1200px;
   }
 }
 
-// ============================================
-// Print styles (optional)
-// ============================================
 @media print {
   .todo-app {
     &__nav,
