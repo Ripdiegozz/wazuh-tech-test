@@ -11,7 +11,21 @@ import {
   EuiLoadingSpinner,
   EuiToolTip,
 } from '@elastic/eui';
+import { Pie, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+} from 'chart.js';
+import euiTheme from '@elastic/eui/dist/oui_theme_light.json';
 import { TodoStatistics, TodoStatus, TodoPriority, ComplianceStandard } from '../../../common/types';
+
+// Register Chart.js components
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 interface StatsDashboardProps {
   statistics: TodoStatistics | undefined;
@@ -21,21 +35,35 @@ interface StatsDashboardProps {
 // EUI color types for progress bars and visual elements
 type EuiColorType = 'primary' | 'success' | 'warning' | 'danger' | 'accent' | 'subdued';
 
-// Status colors using EUI semantic colors (CSS variables for charts, names for components)
-const STATUS_CONFIG: Record<TodoStatus, { color: string; euiColor: EuiColorType; label: string }> = {
-  [TodoStatus.PLANNED]: { color: 'var(--euiColorMediumShade)', euiColor: 'subdued', label: 'To Do' },
-  [TodoStatus.IN_PROGRESS]: { color: 'var(--euiColorPrimary)', euiColor: 'primary', label: 'In Progress' },
-  [TodoStatus.BLOCKED]: { color: 'var(--euiColorDanger)', euiColor: 'danger', label: 'Blocked' },
-  [TodoStatus.COMPLETED_SUCCESS]: { color: 'var(--euiColorSuccess)', euiColor: 'success', label: 'Done' },
-  [TodoStatus.COMPLETED_ERROR]: { color: 'var(--euiColorWarning)', euiColor: 'warning', label: 'Error' },
+// EUI colors from theme - these are the same colors used by EuiBadge
+const EUI_COLORS = {
+  primary: euiTheme.euiColorPrimary,       // Blue
+  success: euiTheme.euiColorSuccess,       // Green
+  warning: euiTheme.euiColorWarning,       // Orange
+  danger: euiTheme.euiColorDanger,         // Red
+  accent: euiTheme.euiColorAccent,         // Pink
+  subdued: euiTheme.euiColorMediumShade,   // Gray
+  hollow: euiTheme.euiColorLightShade,     // Light gray
+  default: euiTheme.euiColorMediumShade,   // Default gray
+  mediumShade: euiTheme.euiColorMediumShade, // Medium gray
 };
 
-// Priority colors using EUI semantic colors
+// Status colors - using hex for charts, EUI color names for components
+const STATUS_CONFIG: Record<TodoStatus, { color: string; euiColor: EuiColorType; label: string }> = {
+  [TodoStatus.PLANNED]: { color: EUI_COLORS.mediumShade, euiColor: 'subdued', label: 'To Do' },
+  [TodoStatus.IN_PROGRESS]: { color: EUI_COLORS.primary, euiColor: 'primary', label: 'In Progress' },
+  [TodoStatus.BLOCKED]: { color: EUI_COLORS.danger, euiColor: 'danger', label: 'Blocked' },
+  [TodoStatus.COMPLETED_SUCCESS]: { color: EUI_COLORS.success, euiColor: 'success', label: 'Done' },
+  [TodoStatus.COMPLETED_ERROR]: { color: EUI_COLORS.warning, euiColor: 'warning', label: 'Error' },
+};
+
+// Priority colors - matching the colors used in PRIORITY_OPTIONS dropdown (todo-options.ts)
+// Low: hollow, Medium: primary, High: warning, Critical: danger
 const PRIORITY_CONFIG: Record<TodoPriority, { color: string; euiColor: EuiColorType; label: string }> = {
-  [TodoPriority.LOW]: { color: 'var(--euiColorMediumShade)', euiColor: 'subdued', label: 'Low' },
-  [TodoPriority.MEDIUM]: { color: 'var(--euiColorPrimary)', euiColor: 'primary', label: 'Medium' },
-  [TodoPriority.HIGH]: { color: 'var(--euiColorWarning)', euiColor: 'warning', label: 'High' },
-  [TodoPriority.CRITICAL]: { color: 'var(--euiColorDanger)', euiColor: 'danger', label: 'Critical' },
+  [TodoPriority.LOW]: { color: EUI_COLORS.hollow, euiColor: 'subdued', label: 'Low' },
+  [TodoPriority.MEDIUM]: { color: EUI_COLORS.primary, euiColor: 'primary', label: 'Medium' },
+  [TodoPriority.HIGH]: { color: EUI_COLORS.warning, euiColor: 'warning', label: 'High' },
+  [TodoPriority.CRITICAL]: { color: EUI_COLORS.danger, euiColor: 'danger', label: 'Critical' },
 };
 
 // Compliance standard labels
@@ -90,63 +118,136 @@ const StatProgressBar: React.FC<{
   );
 };
 
-// Donut Chart Component (CSS-based)
-const DonutChart: React.FC<{
-  data: { label: string; value: number; color: string }[];
-  total: number;
-  centerLabel: string;
-}> = ({ data, total, centerLabel }) => {
-  // Calculate segments
-  let cumulativePercentage = 0;
-  const segments = data
-    .filter(d => d.value > 0)
-    .map(d => {
-      const percentage = total > 0 ? (d.value / total) * 100 : 0;
-      const segment = {
-        ...d,
-        percentage,
-        startPercentage: cumulativePercentage,
-      };
-      cumulativePercentage += percentage;
-      return segment;
-    });
+// Chart data interface
+interface ChartDataItem {
+  label: string;
+  value: number;
+  color: string;
+}
 
-  // Generate conic-gradient using EUI CSS variables
-  const gradientParts = segments.map((seg) => {
-    const start = seg.startPercentage;
-    const end = start + seg.percentage;
-    return `${seg.color} ${start}% ${end}%`;
-  });
+// Bar Chart Component using Chart.js
+const StatsBarChart: React.FC<{
+  data: ChartDataItem[];
+  id: string;
+}> = ({ data, id }) => {
+  // Filter out zero values
+  const filteredData = data.filter(d => d.value > 0);
   
-  // Use EUI's light shade for empty state
-  const gradient = gradientParts.length > 0 
-    ? `conic-gradient(${gradientParts.join(', ')})`
-    : 'conic-gradient(var(--euiColorLightShade) 0% 100%)';
-
-  return (
-    <div className="donut-chart-container">
-      <div 
-        className="donut-chart"
-        style={{ background: gradient }}
-      >
-        <div className="donut-chart__inner">
-          <span className="donut-chart__value">{total}</span>
-          <span className="donut-chart__label">{centerLabel}</span>
+  if (filteredData.length === 0) {
+    return (
+      <div className="bar-chart-container">
+        <div className="bar-chart-empty">
+          <EuiText size="s" color="subdued">No data</EuiText>
         </div>
       </div>
-      <div className="donut-chart__legend">
-        {data.map((item) => (
-          <EuiToolTip key={item.label} content={`${item.value} items`}>
-            <div className="donut-chart__legend-item">
-              <span 
-                className="donut-chart__legend-dot"
-                style={{ backgroundColor: item.color }}
-              />
-              <EuiText size="xs">{item.label}</EuiText>
-            </div>
-          </EuiToolTip>
-        ))}
+    );
+  }
+
+  const chartData = {
+    labels: filteredData.map(d => d.label),
+    datasets: [
+      {
+        data: filteredData.map(d => d.value),
+        backgroundColor: filteredData.map(d => d.color),
+        borderColor: filteredData.map(d => d.color),
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => `${context.parsed.y} tasks`,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+          precision: 0,
+        },
+      },
+    },
+  };
+
+  return (
+    <div className="bar-chart-container" style={{ height: 200 }}>
+      <Bar data={chartData} options={options} />
+    </div>
+  );
+};
+
+// Pie Chart Component using Chart.js
+const StatsPieChart: React.FC<{
+  data: ChartDataItem[];
+  id: string;
+}> = ({ data, id }) => {
+  // Filter out zero values
+  const filteredData = data.filter(d => d.value > 0);
+  
+  if (filteredData.length === 0) {
+    return (
+      <div className="pie-chart-container">
+        <div className="pie-chart-empty">
+          <EuiText size="s" color="subdued">No data</EuiText>
+        </div>
       </div>
+    );
+  }
+
+  const chartData = {
+    labels: filteredData.map(d => d.label),
+    datasets: [
+      {
+        data: filteredData.map(d => d.value),
+        backgroundColor: filteredData.map(d => d.color),
+        borderColor: '#ffffff',
+        borderWidth: 2,
+        hoverOffset: 8,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right' as const,
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          padding: 15,
+          font: {
+            size: 12,
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => {
+            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const percentage = ((context.parsed / total) * 100).toFixed(1);
+            return `${context.label}: ${context.parsed} (${percentage}%)`;
+          },
+        },
+      },
+    },
+  };
+
+  return (
+    <div className="pie-chart-container" style={{ height: 220 }}>
+      <Pie data={chartData} options={options} />
     </div>
   );
 };
@@ -282,10 +383,9 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({
               </h3>
             </EuiText>
             <EuiSpacer size="m" />
-            <DonutChart
+            <StatsPieChart
+              id="status-chart"
               data={statusData}
-              total={totalCount}
-              centerLabel="Tasks"
             />
           </EuiPanel>
         </EuiFlexItem>
@@ -299,10 +399,9 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({
               </h3>
             </EuiText>
             <EuiSpacer size="m" />
-            <DonutChart
+            <StatsBarChart
+              id="priority-chart"
               data={priorityData}
-              total={totalCount}
-              centerLabel="Tasks"
             />
           </EuiPanel>
         </EuiFlexItem>
@@ -414,13 +513,13 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({
               <p>
                 You have <strong>{inProgressCount}</strong> tasks in progress
                 {blockedCount > 0 && (
-                  <>, <strong style={{ color: 'var(--euiColorDanger)' }}>{blockedCount}</strong> blocked</>
+                  <>, <strong style={{ color: EUI_COLORS.danger }}>{blockedCount}</strong> blocked</>
                 )}
                 {overdueCount > 0 && (
-                  <>, and <strong style={{ color: 'var(--euiColorDanger)' }}>{overdueCount}</strong> overdue</>
+                  <>, and <strong style={{ color: EUI_COLORS.danger }}>{overdueCount}</strong> overdue</>
                 )}.
                 {completedCount > 0 && (
-                  <> You've completed <strong style={{ color: 'var(--euiColorSuccess)' }}>{completedCount}</strong> tasks so far!</>
+                  <> You've completed <strong style={{ color: EUI_COLORS.success }}>{completedCount}</strong> tasks so far!</>
                 )}
               </p>
             </EuiText>
