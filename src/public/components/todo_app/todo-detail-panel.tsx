@@ -179,7 +179,7 @@ export const TodoDetailPanel: React.FC<TodoDetailPanelProps> = ({
             )}
           </EuiFlexItem>
           <EuiFlexItem grow={false} style={{ marginRight: 32 }}>
-            <EuiFlexGroup gutterSize="s">
+            <EuiFlexGroup gutterSize="s" responsive={false}>
               <EuiFlexItem grow={false}>
                 <EuiToolTip content="Archive">
                   <EuiButtonIcon iconType="folderClosed" aria-label="Archive" onClick={handleArchive} />

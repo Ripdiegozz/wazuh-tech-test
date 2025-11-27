@@ -75,20 +75,50 @@ $breakpoint-l: 1200px;
     &__filters {
       order: 3;
       overflow-x: auto;
-      flex-wrap: nowrap;
       -webkit-overflow-scrolling: touch;
       padding-bottom: $euiSizeXS;
+      margin: 0 (-$euiSizeS); // Extend to edges
+      padding-left: $euiSizeS;
+      padding-right: $euiSizeS;
+      
+      // Hide scrollbar but keep functionality
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
       
       // Allow horizontal scroll for filter buttons
       .euiFilterGroup {
         flex-wrap: nowrap;
+        min-width: max-content;
+      }
+      
+      // Make filter buttons more compact
+      .euiFilterButton {
+        white-space: nowrap;
+        padding: $euiSizeXS $euiSizeS;
+        font-size: $euiFontSizeXS;
       }
     }
 
     &__actions {
       order: 2;
       margin-left: 0;
-      justify-content: flex-end;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: $euiSizeS;
+      
+      // Priority dropdown - limit width to prevent overflow
+      .euiSuperSelect {
+        min-width: 120px;
+        max-width: 140px;
+      }
+      
+      // Create button stays compact
+      .euiButton {
+        white-space: nowrap;
+      }
     }
   }
 
