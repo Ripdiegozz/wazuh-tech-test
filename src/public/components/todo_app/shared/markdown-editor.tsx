@@ -109,7 +109,7 @@ export const EditableMarkdown: React.FC<EditableMarkdownProps> = ({
           initialViewMode="editing"
         />
         <EuiSpacer size="s" />
-        <EuiFlexGroup gutterSize="s" justifyContent="flexEnd">
+        <EuiFlexGroup gutterSize="s" justifyContent="flexEnd" responsive={false}>
           <EuiFlexItem grow={false}>
             <EuiButtonIcon
               iconType="cross"

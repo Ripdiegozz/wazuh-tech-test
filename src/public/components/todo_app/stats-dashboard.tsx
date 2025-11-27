@@ -23,6 +23,7 @@ import {
 } from 'chart.js';
 import euiTheme from '@elastic/eui/dist/oui_theme_light.json';
 import { TodoStatistics, TodoStatus, TodoPriority, ComplianceStandard } from '../../../common/types';
+import { useIsMobile } from '../../hooks';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
@@ -184,6 +185,8 @@ const StatsPieChart: React.FC<{
   data: ChartDataItem[];
   id: string;
 }> = ({ data, id }) => {
+  const isMobile = useIsMobile();
+  
   // Filter out zero values
   const filteredData = data.filter(d => d.value > 0);
   
@@ -215,13 +218,13 @@ const StatsPieChart: React.FC<{
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: isMobile ? 'bottom' as const : 'right' as const,
         labels: {
           usePointStyle: true,
           pointStyle: 'circle',
-          padding: 15,
+          padding: isMobile ? 10 : 15,
           font: {
-            size: 12,
+            size: isMobile ? 11 : 12,
           },
         },
       },
@@ -238,7 +241,7 @@ const StatsPieChart: React.FC<{
   };
 
   return (
-    <div className="pie-chart-container" style={{ height: 220 }}>
+    <div className="pie-chart-container" style={{ height: isMobile ? 280 : 220 }}>
       <Pie data={chartData} options={options} />
     </div>
   );

@@ -224,3 +224,60 @@
   }
 }
 
+// ============================================
+// Responsive styles for detail panel
+// ============================================
+@media (max-width: 480px) {
+  .todo-detail-panel {
+    // Reduce header padding
+    .euiFlyoutHeader {
+      padding: $euiSizeS !important;
+    }
+    
+    .euiFlyoutBody__overflowContent {
+      padding: $euiSizeS !important;
+    }
+  }
+
+  .todo-detail {
+    &__fields {
+      padding: $euiSizeXS;
+    }
+
+    &__field-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: $euiSizeXS;
+      padding: $euiSizeS 0;
+    }
+
+    &__field-label {
+      width: 100%;
+      min-width: auto;
+    }
+
+    &__field-value {
+      width: 100%;
+      
+      // ComboBox - full width on mobile
+      .euiComboBox {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      // SuperSelect - full width on mobile
+      .euiSuperSelect,
+      .euiSuperSelectControl {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      // Date picker - full width on mobile
+      .euiFormControlLayout,
+      .euiDatePicker {
+        width: 100% !important;
+      }
+    }
+  }
+}
+
