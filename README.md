@@ -39,11 +39,8 @@ A full-featured TODO application plugin for OpenSearch Dashboards, designed for 
 
 - **Bulk Operations**: Archive/delete multiple items at once
 - **Tags & Compliance Standards**: Categorize tasks by tags and security standards
-- **Assignee Management**: Assign tasks to team members
-- **Story Points**: Track effort estimation
 - **Filtering**: Filter by status, priority, and compliance standards
 - **Keyboard Shortcuts**: Quick navigation (N for new, / for search)
-- **URL State Sync**: Share filtered views via URL
 
 ---
 

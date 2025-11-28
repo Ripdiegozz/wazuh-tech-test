@@ -9,7 +9,6 @@ import {
   EuiText,
   EuiSpacer,
   EuiLoadingSpinner,
-  EuiToolTip,
 } from "@elastic/eui";
 import { Pie, Bar } from "react-chartjs-2";
 import {
