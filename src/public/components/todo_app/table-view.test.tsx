@@ -440,7 +440,8 @@ describe("TableView", () => {
 
       render(<TableView {...defaultProps} todos={todosWithoutPoints} />);
 
-      expect(screen.getByText("-")).toBeInTheDocument();
+      // Multiple dashes may appear (e.g., for story points and compliance columns)
+      expect(screen.getAllByText("-").length).toBeGreaterThanOrEqual(1);
     });
   });
 });

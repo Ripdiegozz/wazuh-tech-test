@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   EuiBasicTable,
   EuiBasicTableColumn,
@@ -28,6 +28,24 @@ import {
 } from "../../../common/types";
 import { formatDate } from "../../utils";
 import { PriorityCell, AssigneeCell, WorkCell } from "./shared";
+
+// Hook to detect mobile viewport
+const useIsMobile = (breakpoint: number = 768) => {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= breakpoint : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= breakpoint);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+};
 
 interface TableViewProps {
   todos: TodoItem[];
@@ -108,6 +126,7 @@ export const TableView: React.FC<TableViewProps> = ({
   onBulkDelete,
   isPending = () => false,
 }) => {
+  const isMobile = useIsMobile();
   const [selectedItems, setSelectedItems] = useState<TodoItem[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [statusFilters, setStatusFilters] = useState<TodoStatus[]>([]);
@@ -115,6 +134,21 @@ export const TableView: React.FC<TableViewProps> = ({
     ComplianceStandard[]
   >([]);
   const [isCompliancePopoverOpen, setIsCompliancePopoverOpen] = useState(false);
+
+  // Column widths - wider on mobile for better readability with horizontal scroll
+  const columnWidths = useMemo(
+    () => ({
+      work: isMobile ? "280px" : "350px",
+      priority: isMobile ? "90px" : "100px",
+      status: isMobile ? "130px" : "150px",
+      compliance: isMobile ? "160px" : "180px",
+      updated: isMobile ? "120px" : "180px",
+      storyPoints: isMobile ? "80px" : "100px",
+      assignee: isMobile ? "120px" : "150px",
+      actions: isMobile ? "70px" : "80px",
+    }),
+    [isMobile]
+  );
 
   // Toggle status filter
   const toggleStatusFilter = (status: TodoStatus) => {
@@ -224,7 +258,7 @@ export const TableView: React.FC<TableViewProps> = ({
     {
       field: "id",
       name: "Work",
-      width: "350px",
+      width: columnWidths.work,
       render: (id: string, todo: TodoItem) => (
         <WorkCell
           todo={todo}
@@ -246,14 +280,14 @@ export const TableView: React.FC<TableViewProps> = ({
     {
       field: "priority",
       name: "Priority",
-      width: "100px",
+      width: columnWidths.priority,
       sortable: true,
       render: (priority) => <PriorityCell priority={priority} />,
     },
     {
       field: "status",
       name: "Status",
-      width: "150px",
+      width: columnWidths.status,
       sortable: true,
       render: (status: TodoStatus, todo: TodoItem) => (
         <EuiSuperSelect
@@ -267,28 +301,48 @@ export const TableView: React.FC<TableViewProps> = ({
     {
       field: "complianceStandards",
       name: "Compliance",
-      width: "200px",
-      render: (standards: ComplianceStandard[]) =>
-        standards && standards.length > 0 ? (
-          <EuiFlexGroup gutterSize="xs" wrap responsive={false}>
-            {standards.map((standard) => (
+      width: columnWidths.compliance,
+      render: (standards: ComplianceStandard[]) => {
+        if (!standards || standards.length === 0) {
+          return (
+            <EuiText size="s" color="subdued">
+              -
+            </EuiText>
+          );
+        }
+
+        // Show first badge, then +N for the rest on mobile; 2 on desktop
+        const maxVisible = isMobile ? 1 : 2;
+        const visibleStandards = standards.slice(0, maxVisible);
+        const remaining = standards.length - maxVisible;
+
+        return (
+          <EuiFlexGroup
+            gutterSize="xs"
+            alignItems="center"
+            responsive={false}
+            wrap={false}
+          >
+            {visibleStandards.map((standard) => (
               <EuiFlexItem grow={false} key={standard}>
-                <EuiBadge color="hollow" iconType="securityApp">
+                <EuiBadge color="hollow">
                   {COMPLIANCE_LABELS[standard] || standard}
                 </EuiBadge>
               </EuiFlexItem>
             ))}
+            {remaining > 0 && (
+              <EuiFlexItem grow={false}>
+                <EuiBadge color="default">+{remaining}</EuiBadge>
+              </EuiFlexItem>
+            )}
           </EuiFlexGroup>
-        ) : (
-          <EuiText size="s" color="subdued">
-            -
-          </EuiText>
-        ),
+        );
+      },
     },
     {
       field: "updatedAt",
       name: "Updated",
-      width: "180px",
+      width: columnWidths.updated,
       sortable: true,
       render: (date: string) => (
         <EuiText size="s" color="subdued">
@@ -298,8 +352,8 @@ export const TableView: React.FC<TableViewProps> = ({
     },
     {
       field: "storyPoints",
-      name: "Story Points",
-      width: "100px",
+      name: isMobile ? "Points" : "Story Points",
+      width: columnWidths.storyPoints,
       sortable: true,
       align: "center",
       render: (points?: number) =>
@@ -314,12 +368,12 @@ export const TableView: React.FC<TableViewProps> = ({
     {
       field: "assignee",
       name: "Assignee",
-      width: "150px",
+      width: columnWidths.assignee,
       render: (assignee?: string) => <AssigneeCell assignee={assignee} />,
     },
     {
       name: "Actions",
-      width: "80px",
+      width: columnWidths.actions,
       actions: [
         {
           name: "Edit",
@@ -562,6 +616,9 @@ export const TableView: React.FC<TableViewProps> = ({
           onChange={handleTableChange}
           tableLayout="fixed"
           loading={isLoading}
+          responsive={false}
+          isSelectable={true}
+          hasActions={true}
           noItemsMessage={
             <EuiEmptyPrompt
               iconType="documents"
