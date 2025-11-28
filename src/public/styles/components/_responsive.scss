@@ -20,7 +20,7 @@ $breakpoint-l: 1200px;
 
       h1 {
         font-size: $euiFontSizeM;
-        
+
         // Hide icon on very small screens
         .euiIcon {
           display: none;
@@ -33,7 +33,7 @@ $breakpoint-l: 1200px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
-      
+
       &::-webkit-scrollbar {
         display: none;
       }
@@ -43,12 +43,12 @@ $breakpoint-l: 1200px;
       padding: $euiSizeS;
       font-size: $euiFontSizeXS;
       white-space: nowrap;
-      
+
       // Hide shortcut indicators on mobile
       .euiText {
         display: none;
       }
-      
+
       // Smaller icons
       .euiIcon {
         width: 14px;
@@ -85,18 +85,18 @@ $breakpoint-l: 1200px;
       margin-left: 0;
       order: 2;
       flex-shrink: 0;
-      
+
       // Priority dropdown - compact
       .euiSuperSelect {
         min-width: 100px;
         max-width: 130px;
       }
-      
+
       // Create button - always visible, compact on mobile
       .euiButton {
         white-space: nowrap;
         padding: $euiSizeS $euiSizeM !important;
-        
+
         // Show only icon + text or just icon
         .euiButton__text {
           display: inline;
@@ -114,19 +114,19 @@ $breakpoint-l: 1200px;
       margin: 0 (-$euiSizeS);
       padding-left: $euiSizeS;
       padding-right: $euiSizeS;
-      
+
       // Hide scrollbar but keep functionality
       scrollbar-width: none;
       &::-webkit-scrollbar {
         display: none;
       }
-      
+
       // Prevent wrap, allow scroll
       .euiFilterGroup {
         flex-wrap: nowrap;
         min-width: max-content;
       }
-      
+
       // Compact filter buttons
       .euiFilterButton {
         white-space: nowrap;
@@ -149,7 +149,7 @@ $breakpoint-l: 1200px;
   .kanban-column {
     min-width: 100%;
     max-width: 100%;
-    
+
     &__header {
       // Make header sticky for easier navigation
       position: sticky;
@@ -157,14 +157,14 @@ $breakpoint-l: 1200px;
       z-index: 1;
       background: inherit;
     }
-    
+
     &__cards {
       // Limit card area height to prevent super long columns
       max-height: 350px;
       min-height: 100px;
       overflow-y: auto;
     }
-    
+
     // Add button - always visible
     &__add-btn {
       margin-top: $euiSizeXS;
@@ -226,7 +226,7 @@ $breakpoint-l: 1200px;
     .euiFlexGroup {
       gap: $euiSizeS;
     }
-    
+
     .euiButtonIcon {
       width: 44px !important;
       height: 44px !important;
@@ -239,17 +239,17 @@ $breakpoint-l: 1200px;
     max-width: 100% !important;
     max-height: calc(100vh - #{$euiSizeL * 2}) !important;
     margin: $euiSizeS !important;
-    
+
     .euiModalHeader {
       padding: $euiSizeS $euiSizeM !important;
     }
-    
+
     .euiModalBody {
       flex: 1;
       overflow-y: auto;
       padding: $euiSizeS $euiSizeM !important;
     }
-    
+
     .euiModalFooter {
       padding: $euiSizeS $euiSizeM !important;
     }
@@ -260,7 +260,7 @@ $breakpoint-l: 1200px;
     .euiStat__title {
       font-size: 1.75rem !important;
     }
-    
+
     .euiStat__description {
       font-size: $euiFontSizeXS !important;
     }
@@ -268,7 +268,7 @@ $breakpoint-l: 1200px;
 
   .stats-compliance-badge {
     padding: $euiSizeXS !important;
-    
+
     .euiText {
       font-size: $euiFontSizeXS !important;
     }
@@ -278,51 +278,48 @@ $breakpoint-l: 1200px;
   .euiModal {
     .euiFlexGroup:not(.euiModalFooter .euiFlexGroup) {
       flex-direction: column;
-      
+
       .euiFlexItem {
         width: 100%;
         min-width: 100% !important;
       }
     }
-    
+
     // Keep footer buttons horizontal
     .euiModalFooter .euiFlexGroup {
       flex-direction: row;
     }
   }
 
-  // Table View - horizontal scroll with fixed columns
+  // Table View - horizontal scroll container (responsive={false} in component handles stacking)
   .todo-table {
     // Container allows horizontal scroll
-    overflow: visible;
-    
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    // Ensure table has min-width for good UX
     .euiTable {
-      display: block;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      
-      // Ensure minimum width for readability
-      min-width: 600px;
+      min-width: 800px;
     }
-    
+
     // Bulk actions - stack buttons if needed
     &__bulk-actions {
       .euiFlexGroup {
         flex-wrap: wrap;
         gap: $euiSizeXS;
       }
-      
+
       .euiButton {
         font-size: $euiFontSizeXS;
         padding: $euiSizeXS $euiSizeS;
       }
     }
-    
+
     // Compact cells
     &__work-cell {
       min-width: 200px;
     }
-    
+
     &__work-title {
       max-width: 150px;
       overflow: hidden;
@@ -333,10 +330,10 @@ $breakpoint-l: 1200px;
 
   // Archived view - same treatment
   .archived-view__container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
     .euiTable {
-      display: block;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
       min-width: 600px;
     }
   }
@@ -356,7 +353,7 @@ $breakpoint-l: 1200px;
 
     &__nav-tab {
       padding: $euiSizeS $euiSizeS;
-      
+
       // Hide shortcut indicators on tablets
       .euiText {
         display: none;
@@ -500,4 +497,3 @@ $breakpoint-l: 1200px;
     page-break-inside: avoid;
   }
 }
-

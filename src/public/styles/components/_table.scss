@@ -8,12 +8,39 @@
   border: $euiBorderThin;
   overflow: hidden;
 
-  // Make table scrollable horizontally on mobile
+  // Make table scrollable horizontally - FORCE horizontal layout
+  .euiBasicTable {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  // CRITICAL: Override EUI responsive behavior that stacks table cells
+  // Force table to always display as a proper table, never as stacked cards
   .euiTable {
-    @media (max-width: 768px) {
-      display: block;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+    min-width: 900px; // Ensure horizontal scroll triggers
+
+    // Force table layout
+    &.euiTable--responsive {
+      .euiTableRow {
+        display: table-row !important;
+        flex-wrap: nowrap !important;
+
+        .euiTableRowCell {
+          display: table-cell !important;
+          width: auto !important;
+          max-width: none !important;
+
+          // Hide mobile header labels that EUI adds
+          .euiTableRowCell__mobileHeader {
+            display: none !important;
+          }
+        }
+      }
+
+      // Ensure header stays as table layout too
+      .euiTableHeaderCell {
+        display: table-cell !important;
+      }
     }
   }
 
@@ -23,7 +50,7 @@
     background: $euiColorLightestShade;
 
     h3 {
-      @include euiTitle('xs');
+      @include euiTitle("xs");
       margin: 0;
     }
   }
@@ -38,7 +65,7 @@
     padding: $euiSizeS $euiSizeM;
     background: $euiColorLightestShade;
     border-bottom: $euiBorderThin;
-    
+
     .euiCheckbox__label {
       font-size: $euiFontSizeS;
       color: $euiColorDarkShade;
@@ -58,14 +85,26 @@
     display: flex;
     align-items: center;
     gap: $euiSizeS;
+    min-width: 0; // Allow flex children to shrink below content size
+    max-width: 100%;
+    overflow: hidden;
 
     // Pending state - shows spinner and dims content
     &--pending {
       opacity: 0.6;
-      
+
       .euiLink {
         pointer-events: none;
       }
+    }
+
+    // Link container needs truncation too
+    .euiLink,
+    > span {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      overflow: hidden;
     }
   }
 
@@ -73,12 +112,20 @@
     color: $euiColorMediumShade;
     font-family: $euiCodeFontFamily;
     font-size: $euiFontSizeXS;
+    flex-shrink: 0; // Keep ID always visible
   }
 
   &__work-title {
     font-weight: $euiFontWeightMedium;
     color: $euiColorPrimaryText;
     margin-left: $euiSizeS;
+
+    // Truncation styles
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 250px; // Limit title width
+    display: inline-block;
 
     &:hover {
       text-decoration: underline;
@@ -105,4 +152,3 @@
     font-weight: $euiFontWeightSemiBold;
   }
 }
-

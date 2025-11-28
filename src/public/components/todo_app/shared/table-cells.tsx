@@ -82,7 +82,9 @@ export const WorkCell: React.FC<WorkCellProps> = ({
   const content = (
     <>
       <span className="todo-table__work-id">{formatId(todo.id)}</span>
-      <span className="todo-table__work-title">{todo.title}</span>
+      <span className="todo-table__work-title" title={todo.title}>
+        {todo.title}
+      </span>
     </>
   );
 

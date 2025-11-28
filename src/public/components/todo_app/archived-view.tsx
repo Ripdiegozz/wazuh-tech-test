@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useState } from 'react';
+import * as React from "react";
+import { useState } from "react";
 import {
   EuiBasicTable,
   EuiBasicTableColumn,
@@ -15,10 +15,10 @@ import {
   EuiText,
   Criteria,
   Pagination,
-} from '@elastic/eui';
-import { TodoItem, TodoStatus } from '../../../common/types';
-import { formatDate } from '../../utils';
-import { PriorityCell, AssigneeCell, WorkCell } from './shared';
+} from "@elastic/eui";
+import { TodoItem, TodoStatus } from "../../../common/types";
+import { formatDate } from "../../utils";
+import { PriorityCell, AssigneeCell, WorkCell } from "./shared";
 
 interface ArchivedViewProps {
   todos: TodoItem[];
@@ -26,10 +26,10 @@ interface ArchivedViewProps {
   pageIndex: number;
   pageSize: number;
   sortField: string;
-  sortDirection: 'asc' | 'desc';
+  sortDirection: "asc" | "desc";
   isLoading?: boolean;
   onPaginationChange: (page: number, size: number) => void;
-  onSortChange: (field: string, direction: 'asc' | 'desc') => void;
+  onSortChange: (field: string, direction: "asc" | "desc") => void;
   onRestoreTodo: (id: string) => void;
   onDeleteTodo: (id: string) => void;
   onBulkRestore?: (ids: string[]) => void;
@@ -38,19 +38,19 @@ interface ArchivedViewProps {
 }
 
 const STATUS_LABELS: Record<TodoStatus, string> = {
-  [TodoStatus.PLANNED]: 'To Do',
-  [TodoStatus.IN_PROGRESS]: 'In Progress',
-  [TodoStatus.BLOCKED]: 'Blocked',
-  [TodoStatus.COMPLETED_SUCCESS]: 'Done',
-  [TodoStatus.COMPLETED_ERROR]: 'Error',
+  [TodoStatus.PLANNED]: "To Do",
+  [TodoStatus.IN_PROGRESS]: "In Progress",
+  [TodoStatus.BLOCKED]: "Blocked",
+  [TodoStatus.COMPLETED_SUCCESS]: "Done",
+  [TodoStatus.COMPLETED_ERROR]: "Error",
 };
 
 const STATUS_COLORS: Record<TodoStatus, string> = {
-  [TodoStatus.PLANNED]: 'default',
-  [TodoStatus.IN_PROGRESS]: 'primary',
-  [TodoStatus.BLOCKED]: 'warning',
-  [TodoStatus.COMPLETED_SUCCESS]: 'success',
-  [TodoStatus.COMPLETED_ERROR]: 'danger',
+  [TodoStatus.PLANNED]: "default",
+  [TodoStatus.IN_PROGRESS]: "primary",
+  [TodoStatus.BLOCKED]: "warning",
+  [TodoStatus.COMPLETED_SUCCESS]: "success",
+  [TodoStatus.COMPLETED_ERROR]: "danger",
 };
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -77,7 +77,9 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
 
   // Clear selection when todos change
   React.useEffect(() => {
-    setSelectedItems((prev) => prev.filter((item) => todos.some((t) => t.id === item.id)));
+    setSelectedItems((prev) =>
+      prev.filter((item) => todos.some((t) => t.id === item.id))
+    );
   }, [todos]);
 
   const handleBulkRestore = () => {
@@ -105,19 +107,20 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
 
   const handleTableChange = (criteria: Criteria<TodoItem>) => {
     const { page: paginationChange, sort: sortChange } = criteria;
-    
+
     // Handle pagination changes
     if (paginationChange) {
       const { index: newPageIndex, size: newPageSize } = paginationChange;
       onPaginationChange(newPageIndex, newPageSize);
     }
-    
+
     // Handle sort changes (only if actually different)
     if (sortChange) {
       const newSortField = String(sortChange.field);
       const newSortDirection = sortChange.direction;
-      const sortHasChanged = newSortField !== sortField || newSortDirection !== sortDirection;
-      
+      const sortHasChanged =
+        newSortField !== sortField || newSortDirection !== sortDirection;
+
       if (sortHasChanged) {
         onSortChange(newSortField, newSortDirection);
       }
@@ -126,9 +129,9 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
 
   const columns: EuiBasicTableColumn<TodoItem>[] = [
     {
-      field: 'id',
-      name: 'Work',
-      width: '350px',
+      field: "id",
+      name: "Work",
+      width: "350px",
       render: (id: string, todo: TodoItem) => (
         <WorkCell
           todo={todo}
@@ -147,16 +150,16 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
       ),
     },
     {
-      field: 'priority',
-      name: 'Priority',
-      width: '100px',
+      field: "priority",
+      name: "Priority",
+      width: "100px",
       sortable: true,
       render: (priority) => <PriorityCell priority={priority} />,
     },
     {
-      field: 'status',
-      name: 'Status',
-      width: '150px',
+      field: "status",
+      name: "Status",
+      width: "150px",
       sortable: true,
       render: (status: TodoStatus) => (
         <EuiBadge color={STATUS_COLORS[status]}>
@@ -165,9 +168,9 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
       ),
     },
     {
-      field: 'archivedAt',
-      name: 'Archived',
-      width: '180px',
+      field: "archivedAt",
+      name: "Archived",
+      width: "180px",
       sortable: true,
       render: (date?: string) => (
         <EuiText size="s" color="subdued">
@@ -176,14 +179,14 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
       ),
     },
     {
-      field: 'assignee',
-      name: 'Assignee',
-      width: '150px',
+      field: "assignee",
+      name: "Assignee",
+      width: "150px",
       render: (assignee?: string) => <AssigneeCell assignee={assignee} />,
     },
     {
-      name: 'Actions',
-      width: '200px',
+      name: "Actions",
+      width: "200px",
       render: (todo: TodoItem) => {
         const pending = isPending(todo.id);
         return (
@@ -191,7 +194,7 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
             <EuiFlexItem grow={false}>
               <EuiButtonEmpty
                 size="s"
-                iconType={pending ? 'empty' : 'refresh'}
+                iconType={pending ? "empty" : "refresh"}
                 onClick={() => onRestoreTodo(todo.id)}
                 isLoading={pending}
                 isDisabled={pending}
@@ -232,8 +235,8 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
           title={<h2>No archived items</h2>}
           body={
             <p>
-              When you archive work items, they'll appear here. 
-              Archived items are hidden from the main views but can be restored anytime.
+              When you archive work items, they'll appear here. Archived items
+              are hidden from the main views but can be restored anytime.
             </p>
           }
           titleSize="m"
@@ -249,25 +252,46 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
           <h3>Archived work items</h3>
         </div>
 
-        <EuiFlexGroup alignItems="center" gutterSize="m" className="todo-table__bulk-actions">
+        <EuiFlexGroup
+          alignItems="center"
+          gutterSize="m"
+          className="todo-table__bulk-actions"
+        >
           <EuiFlexItem grow={false}>
             <EuiCheckbox
               id="archived-select-all-checkbox"
-              checked={selectedItems.length === todos.length && todos.length > 0}
-              indeterminate={selectedItems.length > 0 && selectedItems.length < todos.length}
+              checked={
+                selectedItems.length === todos.length && todos.length > 0
+              }
+              indeterminate={
+                selectedItems.length > 0 && selectedItems.length < todos.length
+              }
               onChange={handleSelectAll}
-              label={selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all on page'}
+              label={
+                selectedItems.length > 0
+                  ? `${selectedItems.length} selected`
+                  : "Select all on page"
+              }
             />
           </EuiFlexItem>
           {selectedItems.length > 0 && (
             <>
               <EuiFlexItem grow={false}>
-                <EuiButton size="s" iconType="refresh" onClick={handleBulkRestore}>
+                <EuiButton
+                  size="s"
+                  iconType="refresh"
+                  onClick={handleBulkRestore}
+                >
                   Restore ({selectedItems.length})
                 </EuiButton>
               </EuiFlexItem>
               <EuiFlexItem grow={false}>
-                <EuiButton size="s" iconType="trash" color="danger" onClick={() => setShowBulkDeleteConfirm(true)}>
+                <EuiButton
+                  size="s"
+                  iconType="trash"
+                  color="danger"
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                >
                   Delete ({selectedItems.length})
                 </EuiButton>
               </EuiFlexItem>
@@ -282,6 +306,8 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
           rowHeader="title"
           tableLayout="fixed"
           loading={isLoading}
+          responsive={false}
+          hasActions={true}
           sorting={{
             sort: {
               field: sortField as keyof TodoItem,
@@ -305,20 +331,29 @@ export const ArchivedView: React.FC<ArchivedViewProps> = ({
           confirmButtonText="Delete"
           buttonColor="danger"
         >
-          <p>This action cannot be undone. The work item will be permanently deleted.</p>
+          <p>
+            This action cannot be undone. The work item will be permanently
+            deleted.
+          </p>
         </EuiConfirmModal>
       )}
 
       {showBulkDeleteConfirm && (
         <EuiConfirmModal
-          title={`Delete ${selectedItems.length} archived item${selectedItems.length > 1 ? 's' : ''}?`}
+          title={`Delete ${selectedItems.length} archived item${
+            selectedItems.length > 1 ? "s" : ""
+          }?`}
           onCancel={() => setShowBulkDeleteConfirm(false)}
           onConfirm={handleBulkDelete}
           cancelButtonText="Cancel"
           confirmButtonText="Delete"
           buttonColor="danger"
         >
-          <p>This action cannot be undone. {selectedItems.length > 1 ? 'These items' : 'This item'} will be permanently deleted.</p>
+          <p>
+            This action cannot be undone.{" "}
+            {selectedItems.length > 1 ? "These items" : "This item"} will be
+            permanently deleted.
+          </p>
         </EuiConfirmModal>
       )}
     </>
