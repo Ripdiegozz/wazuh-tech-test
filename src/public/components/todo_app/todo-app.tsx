@@ -2,49 +2,33 @@ import * as React from "react";
 import { useMemo, useState, useCallback } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  EuiIcon,
-  EuiFieldSearch,
   EuiButton,
   EuiFlexGroup,
   EuiFlexItem,
-  EuiFilterGroup,
-  EuiFilterButton,
-  EuiFilterSelectItem,
-  EuiSuperSelect,
   EuiLoadingSpinner,
-  EuiButtonIcon,
-  EuiToolTip,
-  EuiPopover,
-  EuiText,
-  EuiSpacer,
-  EuiLink,
   EuiTourStep,
-  EuiBadge,
 } from "@elastic/eui";
 import { CoreStart } from "../../../../../../src/core/public";
-import { NavigationPublicPluginStart } from "../../../../../../src/plugins/navigation/public";
-import { createTodoHooks, StoreActions } from "../../hooks";
-import { useTodoStore } from "../../stores";
 import {
+  createTodoHooks,
+  StoreActions,
   useKeyboardShortcuts,
-  KEYBOARD_SHORTCUTS_HELP,
-  SEARCH_INPUT_ID,
   useDebouncedSearch,
   useUrlFilters,
+  useTodoHandlers,
+  useKanbanData,
 } from "../../hooks";
+import { useTodoStore } from "../../stores";
 import { useTodoTour } from "./shared";
-import {
-  TodoItem,
-  TodoStatus,
-  TodoPriority,
-  ComplianceStandard,
-} from "../../../common/types";
+import { TodoStatus, ComplianceStandard } from "../../../common/types";
 import { KanbanBoard } from "./kanban-board";
 import { TableView } from "./table-view";
 import { ArchivedView } from "./archived-view";
 import { StatsDashboard } from "./stats-dashboard";
 import { TodoModal } from "./todo-modal";
 import { TodoDetailPanel } from "./todo-detail-panel";
+import { TodoNavTabs } from "./todo-nav-tabs";
+import { TodoToolbar } from "./todo-toolbar";
 // @ts-ignore
 import "../../styles/todo_app.scss";
 
@@ -61,60 +45,30 @@ interface TodoAppProps {
   basename: string;
   notifications: CoreStart["notifications"];
   http: CoreStart["http"];
-  navigation: NavigationPublicPluginStart;
 }
-
-const STATUS_LABELS: Record<TodoStatus, string> = {
-  [TodoStatus.PLANNED]: "To Do",
-  [TodoStatus.IN_PROGRESS]: "In Progress",
-  [TodoStatus.BLOCKED]: "Blocked",
-  [TodoStatus.COMPLETED_SUCCESS]: "Done",
-  [TodoStatus.COMPLETED_ERROR]: "Error",
-};
-
-const PRIORITY_OPTIONS = [
-  { value: "all", inputDisplay: "All Priorities" },
-  { value: TodoPriority.LOW, inputDisplay: "Low" },
-  { value: TodoPriority.MEDIUM, inputDisplay: "Medium" },
-  { value: TodoPriority.HIGH, inputDisplay: "High" },
-  { value: TodoPriority.CRITICAL, inputDisplay: "Critical" },
-];
-
-const COMPLIANCE_LABELS: Record<ComplianceStandard, string> = {
-  [ComplianceStandard.PCI_DSS]: "PCI DSS",
-  [ComplianceStandard.ISO_27001]: "ISO 27001",
-  [ComplianceStandard.SOX]: "SOX",
-  [ComplianceStandard.HIPAA]: "HIPAA",
-  [ComplianceStandard.GDPR]: "GDPR",
-  [ComplianceStandard.NIST]: "NIST",
-};
-
-const formatBadgeCount = (count: number): string => {
-  return count > 99 ? "99+" : String(count);
-};
 
 const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
   // URL sync for filters
   const { initialFilters, syncToUrl } = useUrlFilters();
 
-  const [isShortcutsOpen, setIsShortcutsOpen] = React.useState(false);
-  const [priorityFilter, setPriorityFilter] = React.useState<string>(
+  const [priorityFilter, setPriorityFilter] = useState<string>(
     initialFilters.priority || "all"
   );
-  const [complianceFilters, setComplianceFilters] = React.useState<
+  const [complianceFilters, setComplianceFilters] = useState<
     ComplianceStandard[]
   >([]);
-  const [isCompliancePopoverOpen, setIsCompliancePopoverOpen] =
-    React.useState(false);
 
   // Toggle compliance filter
-  const toggleComplianceFilter = (standard: ComplianceStandard) => {
-    setComplianceFilters((prev) =>
-      prev.includes(standard)
-        ? prev.filter((s) => s !== standard)
-        : [...prev, standard]
-    );
-  };
+  const toggleComplianceFilter = useCallback(
+    (standard: ComplianceStandard) => {
+      setComplianceFilters((prev) =>
+        prev.includes(standard)
+          ? prev.filter((s) => s !== standard)
+          : [...prev, standard]
+      );
+    },
+    []
+  );
 
   // Pagination & Sorting state for Table View
   const [tablePageIndex, setTablePageIndex] = useState(0);
@@ -133,7 +87,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
   >("desc");
 
   // Tour state
-  const { tourSteps, actions: tourActions, isTourActive } = useTodoTour();
+  const { tourSteps, actions: tourActions } = useTodoTour();
 
   // Get store state and actions
   const store = useTodoStore();
@@ -146,18 +100,15 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
     isModalOpen,
     openCreateModal,
     closeModal,
-    // Detail Panel
     detailPanelTodo,
     openDetailPanel,
     closeDetailPanel,
-    archivedTodos,
     setTodos,
     setArchivedTodos,
     addTodo,
     updateTodoInStore,
     removeTodo,
     setLoading,
-    // Pending state
     addPendingId,
     removePendingId,
     isPending,
@@ -219,7 +170,6 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
   } = todoHooks;
 
   // Build search params with debounced query
-  // Empty string or whitespace = undefined (load all without query filter)
   const searchQuery = debouncedQuery.trim() || undefined;
 
   // Fetch todos with pagination and sorting (server-side) - for Table View
@@ -227,15 +177,15 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
     query: searchQuery,
     status: filters.status.length > 0 ? filters.status : undefined,
     priority:
-      priorityFilter !== "all" ? [priorityFilter as TodoPriority] : undefined,
+      priorityFilter !== "all" ? [priorityFilter as any] : undefined,
     assignee: filters.assignee || undefined,
-    page: tablePageIndex + 1, // API uses 1-based pages
+    page: tablePageIndex + 1,
     size: tablePageSize,
     sortField: tableSortField,
     sortOrder: tableSortDirection,
   });
 
-  // Infinite query for Kanban Board - fetches all data progressively
+  // Infinite query for Kanban Board
   const {
     data: kanbanInfiniteData,
     fetchNextPage: fetchMoreKanban,
@@ -257,6 +207,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
 
   const { data: statisticsData, isLoading: statsLoading } = useStatistics();
 
+  // Mutations
   const createMutation = useCreateTodo();
   const updateMutation = useUpdateTodo();
   const deleteMutation = useDeleteTodo();
@@ -267,6 +218,45 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
   const bulkArchiveMutation = useBulkArchive();
   const bulkRestoreMutation = useBulkRestore();
   const bulkDeleteMutation = useBulkDelete();
+
+  // Use extracted handlers hook
+  const {
+    handleSaveTodo,
+    handleDeleteTodo,
+    handleArchiveTodo,
+    handleRestoreTodo,
+    handleStatusChange,
+    handleReorder,
+    handleBulkArchive,
+    handleBulkRestore,
+    handleBulkDelete,
+  } = useTodoHandlers({
+    notifications,
+    createMutation,
+    deleteMutation,
+    archiveMutation,
+    restoreMutation,
+    updateStatusMutation,
+    reorderMutation,
+    bulkArchiveMutation,
+    bulkRestoreMutation,
+    bulkDeleteMutation,
+  });
+
+  // Use extracted Kanban data hook
+  const {
+    allKanbanTodos,
+    kanbanTotalCount,
+    todosByStatus,
+    statusCounts,
+    complianceCounts,
+  } = useKanbanData({
+    kanbanInfiniteData,
+    searchQuery,
+    priorityFilter,
+    complianceFilters,
+    statusFilters: filters.status,
+  });
 
   // Pagination handlers
   const handleTablePaginationChange = useCallback(
@@ -285,12 +275,12 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
     []
   );
 
-  // Sorting handlers - reset to page 0 when sort changes (server-side sorting)
+  // Sorting handlers
   const handleTableSortChange = useCallback(
     (field: string, direction: "asc" | "desc") => {
       setTableSortField(field);
       setTableSortDirection(direction);
-      setTablePageIndex(0); // Reset to first page on sort change
+      setTablePageIndex(0);
     },
     []
   );
@@ -299,7 +289,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
     (field: string, direction: "asc" | "desc") => {
       setArchivedSortField(field);
       setArchivedSortDirection(direction);
-      setArchivedPageIndex(0); // Reset to first page on sort change
+      setArchivedPageIndex(0);
     },
     []
   );
@@ -309,6 +299,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
     setTablePageIndex(0);
   }, [searchQuery, priorityFilter, filters.status]);
 
+  // Initialize from URL
   React.useEffect(() => {
     if (initialFilters.view) {
       setView(initialFilters.view as any);
@@ -331,547 +322,43 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
     });
   }, [currentView, filters.query, filters.status, priorityFilter, syncToUrl]);
 
-  // Handlers
-  const handleSaveTodo = async (data: any) => {
-    try {
-      await createMutation.mutateAsync(data);
-      notifications.toasts.addSuccess("TODO created");
-    } catch (error) {
-      notifications.toasts.addDanger({
-        title: "Error",
-        text: (error as Error).message,
-      });
-    }
-  };
-
-  const handleDeleteTodo = async (id: string) => {
-    try {
-      await deleteMutation.mutateAsync(id);
-      notifications.toasts.addSuccess("TODO deleted");
-    } catch (error) {
-      notifications.toasts.addDanger({
-        title: "Error",
-        text: (error as Error).message,
-      });
-    }
-  };
-
-  const handleArchiveTodo = async (id: string) => {
-    try {
-      await archiveMutation.mutateAsync(id);
-      notifications.toasts.addSuccess("TODO archived");
-    } catch (error) {
-      notifications.toasts.addDanger({
-        title: "Error",
-        text: (error as Error).message,
-      });
-    }
-  };
-
-  const handleRestoreTodo = async (id: string) => {
-    try {
-      await restoreMutation.mutateAsync(id);
-      notifications.toasts.addSuccess("TODO restored");
-    } catch (error) {
-      notifications.toasts.addDanger({
-        title: "Error",
-        text: (error as Error).message,
-      });
-    }
-  };
-
-  const handleStatusChange = async (id: string, status: TodoStatus) => {
-    try {
-      await updateStatusMutation.mutateAsync({ id, status });
-    } catch (error) {
-      notifications.toasts.addDanger({
-        title: "Error",
-        text: (error as Error).message,
-      });
-    }
-  };
-
-  const handleReorder = async (
-    id: string,
-    status: TodoStatus,
-    position: number
-  ) => {
-    try {
-      await reorderMutation.mutateAsync({ id, status, position });
-    } catch (error) {
-      notifications.toasts.addDanger({
-        title: "Error",
-        text: (error as Error).message,
-      });
-    }
-  };
-
-  // Bulk operation handlers
-  const handleBulkArchive = async (ids: string[]) => {
-    try {
-      await bulkArchiveMutation.mutateAsync(ids);
-      notifications.toasts.addSuccess(
-        `${ids.length} item${ids.length > 1 ? "s" : ""} archived`
-      );
-    } catch (error) {
-      notifications.toasts.addDanger({
-        title: "Error",
-        text: (error as Error).message,
-      });
-    }
-  };
-
-  const handleBulkRestore = async (ids: string[]) => {
-    try {
-      await bulkRestoreMutation.mutateAsync(ids);
-      notifications.toasts.addSuccess(
-        `${ids.length} item${ids.length > 1 ? "s" : ""} restored`
-      );
-    } catch (error) {
-      notifications.toasts.addDanger({
-        title: "Error",
-        text: (error as Error).message,
-      });
-    }
-  };
-
-  const handleBulkDelete = async (ids: string[]) => {
-    try {
-      await bulkDeleteMutation.mutateAsync(ids);
-      notifications.toasts.addSuccess(
-        `${ids.length} item${ids.length > 1 ? "s" : ""} deleted`
-      );
-    } catch (error) {
-      notifications.toasts.addDanger({
-        title: "Error",
-        text: (error as Error).message,
-      });
-    }
-  };
-
-  // Flatten all pages from infinite query into a single array for Kanban
-  const allKanbanTodos = useMemo(() => {
-    if (!kanbanInfiniteData?.pages) return [];
-    return kanbanInfiniteData.pages.flatMap((page) => page.items);
-  }, [kanbanInfiniteData]);
-
-  // Get total count for Kanban (from first page)
-  const kanbanTotalCount = kanbanInfiniteData?.pages?.[0]?.total || 0;
-
-  // Apply CLIENT-SIDE filters to Kanban data
-  const filteredKanbanTodos = useMemo(() => {
-    return allKanbanTodos.filter((todo) => {
-      // Search filter (title & description) - client-side
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const titleMatch = todo.title.toLowerCase().includes(query);
-        const descMatch =
-          todo.description?.toLowerCase().includes(query) || false;
-        if (!titleMatch && !descMatch) return false;
-      }
-
-      // Priority filter - client-side
-      if (priorityFilter !== "all" && todo.priority !== priorityFilter) {
-        return false;
-      }
-
-      // Compliance filter - client-side
-      if (complianceFilters.length > 0) {
-        const hasMatchingCompliance = todo.complianceStandards?.some(
-          (standard) => complianceFilters.includes(standard)
-        );
-        if (!hasMatchingCompliance) return false;
-      }
-
-      return true;
-    });
-  }, [allKanbanTodos, searchQuery, priorityFilter, complianceFilters]);
-
-  // Group filtered Kanban todos by status and sort by position
-  const kanbanTodosByStatus = useMemo(() => {
-    const grouped: Record<TodoStatus, TodoItem[]> = {
-      [TodoStatus.PLANNED]: [],
-      [TodoStatus.IN_PROGRESS]: [],
-      [TodoStatus.BLOCKED]: [],
-      [TodoStatus.COMPLETED_SUCCESS]: [],
-      [TodoStatus.COMPLETED_ERROR]: [],
-    };
-
-    filteredKanbanTodos.forEach((todo) => {
-      if (grouped[todo.status]) {
-        grouped[todo.status].push(todo);
-      }
-    });
-
-    // Sort each column by position (ascending)
-    Object.keys(grouped).forEach((status) => {
-      grouped[status as TodoStatus].sort(
-        (a, b) => (a.position ?? 0) - (b.position ?? 0)
-      );
-    });
-
-    return grouped;
-  }, [filteredKanbanTodos]);
-
-  // Apply status filter to Kanban (hide empty columns if filtered)
-  const todosByStatus = useMemo(() => {
-    // If no status filters selected, show all statuses
-    if (filters.status.length === 0) {
-      return kanbanTodosByStatus;
-    }
-
-    // Otherwise, only show the selected statuses (empty arrays for unselected)
-    const filtered: Record<TodoStatus, TodoItem[]> = {
-      [TodoStatus.PLANNED]: [],
-      [TodoStatus.IN_PROGRESS]: [],
-      [TodoStatus.BLOCKED]: [],
-      [TodoStatus.COMPLETED_SUCCESS]: [],
-      [TodoStatus.COMPLETED_ERROR]: [],
-    };
-
-    filters.status.forEach((status) => {
-      filtered[status] = kanbanTodosByStatus[status] || [];
-    });
-
-    return filtered;
-  }, [kanbanTodosByStatus, filters.status]);
-
-  // Count todos by status (unfiltered) for filter badges
-  const statusCounts = useMemo(() => {
-    const counts: Record<TodoStatus, number> = {
-      [TodoStatus.PLANNED]: 0,
-      [TodoStatus.IN_PROGRESS]: 0,
-      [TodoStatus.BLOCKED]: 0,
-      [TodoStatus.COMPLETED_SUCCESS]: 0,
-      [TodoStatus.COMPLETED_ERROR]: 0,
-    };
-
-    allKanbanTodos.forEach((todo) => {
-      if (counts[todo.status] !== undefined) {
-        counts[todo.status]++;
-      }
-    });
-
-    return counts;
-  }, [allKanbanTodos]);
-
-  // Count todos by compliance standard (unfiltered) for filter badges
-  const complianceCounts = useMemo(() => {
-    const counts: Record<ComplianceStandard, number> = {
-      [ComplianceStandard.PCI_DSS]: 0,
-      [ComplianceStandard.ISO_27001]: 0,
-      [ComplianceStandard.SOX]: 0,
-      [ComplianceStandard.HIPAA]: 0,
-      [ComplianceStandard.GDPR]: 0,
-      [ComplianceStandard.NIST]: 0,
-    };
-
-    allKanbanTodos.forEach((todo) => {
-      todo.complianceStandards?.forEach((standard) => {
-        if (counts[standard] !== undefined) {
-          counts[standard]++;
-        }
-      });
-    });
-
-    return counts;
-  }, [allKanbanTodos]);
-
-  // Get flat list of filtered todos for table view (already paginated from server)
+  // Table and archived data
   const tableItems = todosData?.items || [];
   const tableTotalItems = todosData?.total || 0;
-
-  // Archived todos (already paginated from server)
   const archivedItems = archivedData?.items || [];
   const archivedTotalItems = archivedData?.total || 0;
 
   return (
     <div className="todo-app">
-      {/* Header */}
-      <EuiTourStep
-        {...tourSteps.step1}
-        footerAction={
-          <EuiButton
-            size="s"
-            color="primary"
-            onClick={() => tourActions.goToStep(2)}
-          >
-            Next
-          </EuiButton>
-        }
-      >
-        <header className="todo-app__header">
-          <h1>
-            <EuiIcon type="listAdd" size="l" />
-            Security TODO Manager
-          </h1>
-        </header>
-      </EuiTourStep>
-
-      {/* Navigation Tabs */}
-      <EuiTourStep
-        {...tourSteps.step3}
-        footerAction={
-          <EuiButton
-            size="s"
-            color="primary"
-            onClick={() => tourActions.goToStep(4)}
-          >
-            Next
-          </EuiButton>
-        }
-      >
-        <nav className="todo-app__nav">
-          <button
-            className={`todo-app__nav-tab ${
-              currentView === "board" ? "todo-app__nav-tab--active" : ""
-            }`}
-            onClick={() => setView("board")}
-          >
-            <EuiIcon type="visMapRegion" />
-            Board
-            <EuiText size="xs" color="subdued">
-              [1]
-            </EuiText>
-          </button>
-          <button
-            className={`todo-app__nav-tab ${
-              currentView === "table" ? "todo-app__nav-tab--active" : ""
-            }`}
-            onClick={() => setView("table")}
-          >
-            <EuiIcon type="visTable" />
-            All Work
-            <EuiText size="xs" color="subdued">
-              [2]
-            </EuiText>
-          </button>
-          <button
-            className={`todo-app__nav-tab ${
-              currentView === "archived" ? "todo-app__nav-tab--active" : ""
-            }`}
-            onClick={() => setView("archived")}
-          >
-            <EuiIcon type="folderClosed" />
-            Archived
-            <EuiText size="xs" color="subdued">
-              [3]
-            </EuiText>
-            {archivedCount > 0 && (
-              <span className="todo-app__nav-badge">
-                {formatBadgeCount(archivedCount)}
-              </span>
-            )}
-          </button>
-          <button
-            className={`todo-app__nav-tab ${
-              currentView === "stats" ? "todo-app__nav-tab--active" : ""
-            }`}
-            onClick={() => setView("stats")}
-          >
-            <EuiIcon type="visBarVerticalStacked" />
-            Stats
-            <EuiText size="xs" color="subdued">
-              [4]
-            </EuiText>
-          </button>
-          <EuiPopover
-            button={
-              <EuiToolTip content="Keyboard shortcuts">
-                <EuiButtonIcon
-                  iconType="keyboardShortcut"
-                  aria-label="Keyboard shortcuts"
-                  onClick={() => setIsShortcutsOpen(!isShortcutsOpen)}
-                />
-              </EuiToolTip>
-            }
-            isOpen={isShortcutsOpen}
-            closePopover={() => setIsShortcutsOpen(false)}
-            anchorPosition="downRight"
-          >
-            <div style={{ width: 280 }}>
-              <EuiText size="s">
-                <h4>Keyboard Shortcuts</h4>
-              </EuiText>
-              <EuiSpacer size="s" />
-              {KEYBOARD_SHORTCUTS_HELP.map((group) => (
-                <div key={group.category}>
-                  <EuiText size="xs" color="subdued">
-                    <strong>{group.category}</strong>
-                  </EuiText>
-                  {group.shortcuts.map((s) => (
-                    <EuiFlexGroup
-                      key={s.keys}
-                      justifyContent="spaceBetween"
-                      alignItems="center"
-                      gutterSize="s"
-                    >
-                      <EuiFlexItem>
-                        <EuiText size="xs">{s.description}</EuiText>
-                      </EuiFlexItem>
-                      <EuiFlexItem grow={false}>
-                        <code>{s.keys}</code>
-                      </EuiFlexItem>
-                    </EuiFlexGroup>
-                  ))}
-                  <EuiSpacer size="xs" />
-                </div>
-              ))}
-              <EuiSpacer size="m" />
-              <EuiLink
-                onClick={() => {
-                  tourActions.resetTour();
-                  setIsShortcutsOpen(false);
-                }}
-              >
-                <EuiIcon type="training" size="s" /> Restart app tour
-              </EuiLink>
-            </div>
-          </EuiPopover>
-        </nav>
-      </EuiTourStep>
+      {/* Navigation */}
+      <TodoNavTabs
+        currentView={currentView}
+        onViewChange={setView}
+        archivedCount={archivedCount}
+        tourSteps={{ step1: tourSteps.step1, step3: tourSteps.step3 }}
+        tourActions={tourActions}
+      />
 
       {/* Content */}
       <main className="todo-app__content">
         {/* Toolbar - only for board and table views */}
         {currentView !== "archived" && currentView !== "stats" && (
-          <div className="todo-toolbar">
-            <EuiTourStep
-              {...tourSteps.step4}
-              footerAction={
-                <EuiButton
-                  size="s"
-                  color="primary"
-                  onClick={() => tourActions.goToStep(5)}
-                >
-                  Next
-                </EuiButton>
-              }
-            >
-              <div className="todo-toolbar__search">
-                <EuiFieldSearch
-                  id={SEARCH_INPUT_ID}
-                  placeholder="Search work... [/]"
-                  value={filters.query}
-                  onChange={(e) => setFilters({ query: e.target.value })}
-                  isClearable
-                  fullWidth
-                />
-              </div>
-            </EuiTourStep>
-
-            {/* Status filters - only for Kanban board view (Table has its own filters) */}
-            {currentView === "board" && (
-              <div className="todo-toolbar__filters">
-                <EuiFilterGroup>
-                  {Object.entries(STATUS_LABELS).map(([status, label]) => (
-                    <EuiFilterButton
-                      key={status}
-                      hasActiveFilters={filters.status.includes(
-                        status as TodoStatus
-                      )}
-                      onClick={() => toggleStatusFilter(status as TodoStatus)}
-                      numFilters={statusCounts[status as TodoStatus] || 0}
-                    >
-                      {label}
-                    </EuiFilterButton>
-                  ))}
-                </EuiFilterGroup>
-
-                {/* Compliance Standards Multi-Select Filter */}
-                <EuiFilterGroup>
-                  <EuiPopover
-                    id="kanbanComplianceFilterPopover"
-                    button={
-                      <EuiFilterButton
-                        iconType="arrowDown"
-                        onClick={() =>
-                          setIsCompliancePopoverOpen(!isCompliancePopoverOpen)
-                        }
-                        isSelected={isCompliancePopoverOpen}
-                        hasActiveFilters={complianceFilters.length > 0}
-                        numActiveFilters={
-                          complianceFilters.length > 0
-                            ? complianceFilters.length
-                            : undefined
-                        }
-                      >
-                        Compliance
-                      </EuiFilterButton>
-                    }
-                    isOpen={isCompliancePopoverOpen}
-                    closePopover={() => setIsCompliancePopoverOpen(false)}
-                    panelPaddingSize="none"
-                    anchorPosition="downLeft"
-                  >
-                    <div style={{ width: 200 }}>
-                      {Object.entries(COMPLIANCE_LABELS).map(
-                        ([standard, label]) => (
-                          <EuiFilterSelectItem
-                            key={standard}
-                            checked={
-                              complianceFilters.includes(
-                                standard as ComplianceStandard
-                              )
-                                ? "on"
-                                : undefined
-                            }
-                            onClick={() =>
-                              toggleComplianceFilter(
-                                standard as ComplianceStandard
-                              )
-                            }
-                          >
-                            <EuiFlexGroup
-                              alignItems="center"
-                              gutterSize="s"
-                              responsive={false}
-                            >
-                              <EuiFlexItem grow={false}>
-                                <EuiIcon type="securityApp" size="s" />
-                              </EuiFlexItem>
-                              <EuiFlexItem>{label}</EuiFlexItem>
-                              <EuiFlexItem grow={false}>
-                                <EuiBadge color="hollow">
-                                  {complianceCounts[
-                                    standard as ComplianceStandard
-                                  ] || 0}
-                                </EuiBadge>
-                              </EuiFlexItem>
-                            </EuiFlexGroup>
-                          </EuiFilterSelectItem>
-                        )
-                      )}
-                    </div>
-                  </EuiPopover>
-                </EuiFilterGroup>
-              </div>
-            )}
-
-            <div className="todo-toolbar__actions">
-              <EuiSuperSelect
-                options={PRIORITY_OPTIONS}
-                valueOfSelected={priorityFilter}
-                onChange={(value) => setPriorityFilter(value)}
-              />
-              <EuiTourStep
-                {...tourSteps.step2}
-                footerAction={
-                  <EuiButton
-                    size="s"
-                    color="primary"
-                    onClick={() => tourActions.goToStep(3)}
-                  >
-                    Next
-                  </EuiButton>
-                }
-              >
-                <EuiButton fill iconType="plus" onClick={openCreateModal}>
-                  Create
-                </EuiButton>
-              </EuiTourStep>
-            </div>
-          </div>
+          <TodoToolbar
+            searchQuery={filters.query}
+            onSearchChange={(query) => setFilters({ query })}
+            showStatusFilters={currentView === "board"}
+            statusFilters={filters.status}
+            onToggleStatusFilter={toggleStatusFilter}
+            statusCounts={statusCounts}
+            complianceFilters={complianceFilters}
+            onToggleComplianceFilter={toggleComplianceFilter}
+            complianceCounts={complianceCounts}
+            priorityFilter={priorityFilter}
+            onPriorityChange={setPriorityFilter}
+            onCreateClick={openCreateModal}
+            tourSteps={{ step2: tourSteps.step2, step4: tourSteps.step4 }}
+            tourActions={tourActions}
+          />
         )}
 
         {/* View Content */}
@@ -899,7 +386,13 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
               >
                 <KanbanBoard
                   todosByStatus={todosByStatus}
-                  statusLabels={STATUS_LABELS}
+                  statusLabels={{
+                    [TodoStatus.PLANNED]: "To Do",
+                    [TodoStatus.IN_PROGRESS]: "In Progress",
+                    [TodoStatus.BLOCKED]: "Blocked",
+                    [TodoStatus.COMPLETED_SUCCESS]: "Done",
+                    [TodoStatus.COMPLETED_ERROR]: "Error",
+                  }}
                   onEditTodo={openDetailPanel}
                   onReorder={handleReorder}
                   onArchiveTodo={handleArchiveTodo}
@@ -974,7 +467,6 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
           onClose={closeDetailPanel}
           onUpdate={async (id, updates) => {
             await updateMutation.mutateAsync({ id, data: updates });
-            // No toast for inline edits - visual feedback is sufficient
           }}
           onArchive={handleArchiveTodo}
           onDelete={handleDeleteTodo}
