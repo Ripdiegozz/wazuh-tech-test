@@ -108,12 +108,16 @@ export class TodoService {
   public async createTodo(data: CreateTodoRequest): Promise<TodoItem> {
     const client = this.osService.getClient();
     const now = new Date().toISOString();
+    const status = data.status || TodoStatus.PLANNED;
+    
+    // Get max position in the target status column to add at the end
+    const maxPosition = await this.getMaxPositionInStatus(status);
     
     const todo: TodoItem = {
       id: uuidv4(),
       title: data.title,
       description: data.description,
-      status: data.status || TodoStatus.PLANNED,
+      status,
       priority: data.priority || TodoPriority.MEDIUM,
       tags: data.tags || [],
       complianceStandards: data.complianceStandards || [],
@@ -125,6 +129,7 @@ export class TodoService {
       archived: false,
       storyPoints: data.storyPoints,
       coverImage: data.coverImage,
+      position: maxPosition + 1000, // Add at the end with 1000 increment
     };
 
     await client.index({
@@ -136,6 +141,41 @@ export class TodoService {
 
     this.logger.info(`Created TODO item: ${todo.id}`);
     return todo;
+  }
+
+  /**
+   * Get the maximum position value in a status column
+   */
+  private async getMaxPositionInStatus(status: TodoStatus): Promise<number> {
+    const client = this.osService.getClient();
+    
+    try {
+      const response = await client.search({
+        index: TODO_INDEX_NAME,
+        body: {
+          query: {
+            bool: {
+              filter: [
+                { term: { status } },
+                { term: { archived: false } },
+              ],
+            },
+          },
+          sort: [{ position: { order: 'desc' } }],
+          size: 1,
+          _source: ['position'],
+        },
+      });
+
+      const hits = response.body.hits.hits;
+      if (hits.length > 0 && hits[0]._source?.position != null) {
+        return hits[0]._source.position;
+      }
+      return 0;
+    } catch (error) {
+      this.logger.warn('Error getting max position, defaulting to 0', error);
+      return 0;
+    }
   }
 
   public async getTodoById(id: string): Promise<TodoItem | null> {
@@ -227,6 +267,17 @@ export class TodoService {
 
     const from = (page - 1) * size;
 
+    // Build sort config with unmapped_type for fields that may not exist on all docs
+    const sortConfig: Record<string, any> = {
+      order: sortOrder,
+      unmapped_type: sortField === 'position' ? 'long' : 'date',
+    };
+    
+    // For optional fields, put docs without the field at the end
+    if (['archivedAt', 'completedAt', 'dueDate', 'position'].includes(sortField)) {
+      sortConfig.missing = sortOrder === 'asc' ? '_last' : '_first';
+    }
+
     const response = await client.search({
       index: TODO_INDEX_NAME,
       body: {
@@ -236,7 +287,7 @@ export class TodoService {
             filter,
           },
         },
-        sort: [{ [sortField]: { order: sortOrder } }],
+        sort: [{ [sortField]: sortConfig }],
         from,
         size,
       },
@@ -267,6 +318,10 @@ export class TodoService {
       archived: false,
       archivedAt: undefined,
     });
+  }
+
+  public async reorderTodo(id: string, status: TodoStatus, position: number): Promise<TodoItem> {
+    return this.updateTodo(id, { status, position });
   }
 
   // ============================================

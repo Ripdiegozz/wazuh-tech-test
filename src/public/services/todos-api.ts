@@ -131,6 +131,20 @@ export class TodosApiService {
     return response.data;
   }
 
+  /**
+   * Reorder a TODO item (move to new position in a column)
+   */
+  async reorderTodo(id: string, status: string, position: number): Promise<TodoItem> {
+    const response = await this.http.post<ApiResponse<TodoItem>>(
+      `/api/custom_plugin/todos/${id}/reorder`,
+      { body: JSON.stringify({ status, position }) }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to reorder TODO');
+    }
+    return response.data;
+  }
+
   // ============================================
   // Bulk Operations
   // ============================================

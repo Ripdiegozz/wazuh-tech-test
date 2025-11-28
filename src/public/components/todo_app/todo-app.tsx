@@ -163,6 +163,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     useArchiveTodo, 
     useRestoreTodo, 
     useUpdateStatus,
+    useReorderTodo,
     useBulkArchive,
     useBulkRestore,
     useBulkDelete,
@@ -212,6 +213,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
   const archiveMutation = useArchiveTodo();
   const restoreMutation = useRestoreTodo();
   const updateStatusMutation = useUpdateStatus();
+  const reorderMutation = useReorderTodo();
   const bulkArchiveMutation = useBulkArchive();
   const bulkRestoreMutation = useBulkRestore();
   const bulkDeleteMutation = useBulkDelete();
@@ -328,6 +330,17 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     }
   };
 
+  const handleReorder = async (id: string, status: TodoStatus, position: number) => {
+    try {
+      await reorderMutation.mutateAsync({ id, status, position });
+    } catch (error) {
+      notifications.toasts.addDanger({
+        title: 'Error',
+        text: (error as Error).message,
+      });
+    }
+  };
+
   // Bulk operation handlers
   const handleBulkArchive = async (ids: string[]) => {
     try {
@@ -394,7 +407,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
     });
   }, [allKanbanTodos, searchQuery, priorityFilter]);
 
-  // Group filtered Kanban todos by status
+  // Group filtered Kanban todos by status and sort by position
   const kanbanTodosByStatus = useMemo(() => {
     const grouped: Record<TodoStatus, TodoItem[]> = {
       [TodoStatus.PLANNED]: [],
@@ -408,6 +421,11 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
       if (grouped[todo.status]) {
         grouped[todo.status].push(todo);
       }
+    });
+    
+    // Sort each column by position (ascending)
+    Object.keys(grouped).forEach((status) => {
+      grouped[status as TodoStatus].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     });
     
     return grouped;
@@ -610,20 +628,23 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
             </div>
             </EuiTourStep>
 
-            <div className="todo-toolbar__filters">
-              <EuiFilterGroup>
-                {Object.entries(STATUS_LABELS).map(([status, label]) => (
-                  <EuiFilterButton
-                    key={status}
-                    hasActiveFilters={filters.status.includes(status as TodoStatus)}
-                    onClick={() => toggleStatusFilter(status as TodoStatus)}
-                    numFilters={statusCounts[status as TodoStatus] || 0}
-                  >
-                    {label}
-                  </EuiFilterButton>
-                ))}
-              </EuiFilterGroup>
-            </div>
+            {/* Status filters - only for Kanban board view (Table has its own filters) */}
+            {currentView === 'board' && (
+              <div className="todo-toolbar__filters">
+                <EuiFilterGroup>
+                  {Object.entries(STATUS_LABELS).map(([status, label]) => (
+                    <EuiFilterButton
+                      key={status}
+                      hasActiveFilters={filters.status.includes(status as TodoStatus)}
+                      onClick={() => toggleStatusFilter(status as TodoStatus)}
+                      numFilters={statusCounts[status as TodoStatus] || 0}
+                    >
+                      {label}
+                    </EuiFilterButton>
+                  ))}
+                </EuiFilterGroup>
+              </div>
+            )}
 
             <div className="todo-toolbar__actions">
               <EuiSuperSelect
@@ -673,7 +694,7 @@ const TodoAppContent: React.FC<TodoAppProps> = ({
                 todosByStatus={todosByStatus}
                 statusLabels={STATUS_LABELS}
                 onEditTodo={openDetailPanel}
-                onStatusChange={handleStatusChange}
+                onReorder={handleReorder}
                 onArchiveTodo={handleArchiveTodo}
                 onDeleteTodo={handleDeleteTodo}
                 onCreateInStatus={openCreateModal}

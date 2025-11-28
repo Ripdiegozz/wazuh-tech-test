@@ -1,11 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 
-/**
- * Hook that debounces a value
- * @param value - The value to debounce
- * @param delay - Delay in milliseconds (default: 300ms)
- * @returns The debounced value
- */
 export function useDebounce<T>(value: T, delay: number = 300): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -22,16 +16,6 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
   return debouncedValue;
 }
 
-/**
- * Hook that debounces a string value for search
- * - Debounces input while typing
- * - Immediately clears when value becomes empty (no delay for clear)
- * - Uses a ref to track previous value to ensure state updates
- * 
- * @param value - The string value to debounce
- * @param delay - Delay in milliseconds (default: 300ms)
- * @returns The debounced value
- */
 export function useDebouncedSearch(value: string, delay: number = 300): string {
   const [debouncedValue, setDebouncedValue] = useState<string>(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

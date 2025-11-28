@@ -28,6 +28,12 @@
     }
   }
 
+  &__filters {
+    padding: $euiSizeM;
+    background: $euiColorLightestShade;
+    border-bottom: $euiBorderThin;
+  }
+
   &__bulk-actions {
     padding: $euiSizeS $euiSizeM;
     background: $euiColorLightestShade;

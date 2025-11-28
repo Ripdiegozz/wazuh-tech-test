@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   EuiBasicTable,
   EuiBasicTableColumn,
@@ -13,6 +13,8 @@ import {
   EuiFlexGroup,
   EuiFlexItem,
   EuiEmptyPrompt,
+  EuiFilterGroup,
+  EuiFilterButton,
   Criteria,
   Pagination,
 } from '@elastic/eui';
@@ -47,6 +49,14 @@ const STATUS_OPTIONS = [
   { value: TodoStatus.COMPLETED_ERROR, inputDisplay: <EuiBadge color="danger">Error</EuiBadge> },
 ];
 
+const STATUS_LABELS: Record<TodoStatus, string> = {
+  [TodoStatus.PLANNED]: 'To Do',
+  [TodoStatus.IN_PROGRESS]: 'In Progress',
+  [TodoStatus.BLOCKED]: 'Blocked',
+  [TodoStatus.COMPLETED_SUCCESS]: 'Done',
+  [TodoStatus.COMPLETED_ERROR]: 'Error',
+};
+
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 export const TableView: React.FC<TableViewProps> = ({
@@ -69,11 +79,46 @@ export const TableView: React.FC<TableViewProps> = ({
 }) => {
   const [selectedItems, setSelectedItems] = useState<TodoItem[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [statusFilters, setStatusFilters] = useState<TodoStatus[]>([]);
+
+  // Toggle status filter
+  const toggleStatusFilter = (status: TodoStatus) => {
+    setStatusFilters((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  // Count items by status (from loaded data)
+  const statusCounts = useMemo(() => {
+    const counts: Record<TodoStatus, number> = {
+      [TodoStatus.PLANNED]: 0,
+      [TodoStatus.IN_PROGRESS]: 0,
+      [TodoStatus.BLOCKED]: 0,
+      [TodoStatus.COMPLETED_SUCCESS]: 0,
+      [TodoStatus.COMPLETED_ERROR]: 0,
+    };
+    todos.forEach((todo) => {
+      if (counts[todo.status] !== undefined) {
+        counts[todo.status]++;
+      }
+    });
+    return counts;
+  }, [todos]);
+
+  // Filter items client-side based on selected status filters
+  const filteredTodos = useMemo(() => {
+    if (statusFilters.length === 0) {
+      return todos;
+    }
+    return todos.filter((todo) => statusFilters.includes(todo.status));
+  }, [todos, statusFilters]);
 
   // Clear selection when todos change
   React.useEffect(() => {
-    setSelectedItems((prev) => prev.filter((item) => todos.some((t) => t.id === item.id)));
-  }, [todos]);
+    setSelectedItems((prev) => prev.filter((item) => filteredTodos.some((t) => t.id === item.id)));
+  }, [filteredTodos]);
 
   const handleBulkArchive = () => {
     if (onBulkArchive && selectedItems.length > 0) {
@@ -91,10 +136,10 @@ export const TableView: React.FC<TableViewProps> = ({
   };
 
   const handleSelectAll = () => {
-    if (selectedItems.length === todos.length) {
+    if (selectedItems.length === filteredTodos.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems([...todos]);
+      setSelectedItems([...filteredTodos]);
     }
   };
 
@@ -234,14 +279,50 @@ export const TableView: React.FC<TableViewProps> = ({
   return (
     <>
       <div className="todo-table">
-        {todos.length > 0 && (
+        {/* Status Filter Group - Client-side filtering */}
+        <EuiFlexGroup alignItems="center" gutterSize="m" wrap className="todo-table__filters">
+          <EuiFlexItem grow={false}>
+            <EuiFilterGroup>
+              {Object.entries(STATUS_LABELS).map(([status, label]) => (
+                <EuiFilterButton
+                  key={status}
+                  hasActiveFilters={statusFilters.includes(status as TodoStatus)}
+                  onClick={() => toggleStatusFilter(status as TodoStatus)}
+                  numFilters={statusCounts[status as TodoStatus] || 0}
+                  numActiveFilters={
+                    statusFilters.includes(status as TodoStatus)
+                      ? statusCounts[status as TodoStatus]
+                      : undefined
+                  }
+                >
+                  {label}
+                </EuiFilterButton>
+              ))}
+            </EuiFilterGroup>
+          </EuiFlexItem>
+          {statusFilters.length > 0 && (
+            <EuiFlexItem grow={false}>
+              <EuiButton
+                size="s"
+                iconType="cross"
+                onClick={() => setStatusFilters([])}
+                color="text"
+              >
+                Clear filters
+              </EuiButton>
+            </EuiFlexItem>
+          )}
+        </EuiFlexGroup>
+        <EuiSpacer size="m" />
+
+        {filteredTodos.length > 0 && (
           <>
             <EuiFlexGroup alignItems="center" gutterSize="m" className="todo-table__bulk-actions">
               <EuiFlexItem grow={false}>
                 <EuiCheckbox
                   id="select-all-checkbox"
-                  checked={selectedItems.length === todos.length && todos.length > 0}
-                  indeterminate={selectedItems.length > 0 && selectedItems.length < todos.length}
+                  checked={selectedItems.length === filteredTodos.length && filteredTodos.length > 0}
+                  indeterminate={selectedItems.length > 0 && selectedItems.length < filteredTodos.length}
                   onChange={handleSelectAll}
                   label={selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all on page'}
                 />
@@ -266,7 +347,7 @@ export const TableView: React.FC<TableViewProps> = ({
         )}
 
         <EuiBasicTable
-          items={todos}
+          items={filteredTodos}
           columns={columns}
           rowHeader="title"
           sorting={{
