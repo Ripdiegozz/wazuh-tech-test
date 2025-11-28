@@ -9,6 +9,7 @@ import {
   EuiFlexItem,
   EuiFilterGroup,
   EuiFilterButton,
+  EuiFilterSelectItem,
   EuiSuperSelect,
   EuiLoadingSpinner,
   EuiButtonIcon,
@@ -18,6 +19,7 @@ import {
   EuiSpacer,
   EuiLink,
   EuiTourStep,
+  EuiBadge,
 } from "@elastic/eui";
 import { CoreStart } from "../../../../../../src/core/public";
 import { NavigationPublicPluginStart } from "../../../../../../src/plugins/navigation/public";
@@ -31,7 +33,12 @@ import {
   useUrlFilters,
 } from "../../hooks";
 import { useTodoTour } from "./shared";
-import { TodoItem, TodoStatus, TodoPriority } from "../../../common/types";
+import {
+  TodoItem,
+  TodoStatus,
+  TodoPriority,
+  ComplianceStandard,
+} from "../../../common/types";
 import { KanbanBoard } from "./kanban-board";
 import { TableView } from "./table-view";
 import { ArchivedView } from "./archived-view";
@@ -73,6 +80,15 @@ const PRIORITY_OPTIONS = [
   { value: TodoPriority.CRITICAL, inputDisplay: "Critical" },
 ];
 
+const COMPLIANCE_LABELS: Record<ComplianceStandard, string> = {
+  [ComplianceStandard.PCI_DSS]: "PCI DSS",
+  [ComplianceStandard.ISO_27001]: "ISO 27001",
+  [ComplianceStandard.SOX]: "SOX",
+  [ComplianceStandard.HIPAA]: "HIPAA",
+  [ComplianceStandard.GDPR]: "GDPR",
+  [ComplianceStandard.NIST]: "NIST",
+};
+
 const formatBadgeCount = (count: number): string => {
   return count > 99 ? "99+" : String(count);
 };
@@ -85,6 +101,20 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
   const [priorityFilter, setPriorityFilter] = React.useState<string>(
     initialFilters.priority || "all"
   );
+  const [complianceFilters, setComplianceFilters] = React.useState<
+    ComplianceStandard[]
+  >([]);
+  const [isCompliancePopoverOpen, setIsCompliancePopoverOpen] =
+    React.useState(false);
+
+  // Toggle compliance filter
+  const toggleComplianceFilter = (standard: ComplianceStandard) => {
+    setComplianceFilters((prev) =>
+      prev.includes(standard)
+        ? prev.filter((s) => s !== standard)
+        : [...prev, standard]
+    );
+  };
 
   // Pagination & Sorting state for Table View
   const [tablePageIndex, setTablePageIndex] = useState(0);
@@ -445,9 +475,17 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
         return false;
       }
 
+      // Compliance filter - client-side
+      if (complianceFilters.length > 0) {
+        const hasMatchingCompliance = todo.complianceStandards?.some(
+          (standard) => complianceFilters.includes(standard)
+        );
+        if (!hasMatchingCompliance) return false;
+      }
+
       return true;
     });
-  }, [allKanbanTodos, searchQuery, priorityFilter]);
+  }, [allKanbanTodos, searchQuery, priorityFilter, complianceFilters]);
 
   // Group filtered Kanban todos by status and sort by position
   const kanbanTodosByStatus = useMemo(() => {
@@ -512,6 +550,28 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
       if (counts[todo.status] !== undefined) {
         counts[todo.status]++;
       }
+    });
+
+    return counts;
+  }, [allKanbanTodos]);
+
+  // Count todos by compliance standard (unfiltered) for filter badges
+  const complianceCounts = useMemo(() => {
+    const counts: Record<ComplianceStandard, number> = {
+      [ComplianceStandard.PCI_DSS]: 0,
+      [ComplianceStandard.ISO_27001]: 0,
+      [ComplianceStandard.SOX]: 0,
+      [ComplianceStandard.HIPAA]: 0,
+      [ComplianceStandard.GDPR]: 0,
+      [ComplianceStandard.NIST]: 0,
+    };
+
+    allKanbanTodos.forEach((todo) => {
+      todo.complianceStandards?.forEach((standard) => {
+        if (counts[standard] !== undefined) {
+          counts[standard]++;
+        }
+      });
     });
 
     return counts;
@@ -716,6 +776,74 @@ const TodoAppContent: React.FC<TodoAppProps> = ({ notifications, http }) => {
                       {label}
                     </EuiFilterButton>
                   ))}
+                </EuiFilterGroup>
+
+                {/* Compliance Standards Multi-Select Filter */}
+                <EuiFilterGroup>
+                  <EuiPopover
+                    id="kanbanComplianceFilterPopover"
+                    button={
+                      <EuiFilterButton
+                        iconType="arrowDown"
+                        onClick={() =>
+                          setIsCompliancePopoverOpen(!isCompliancePopoverOpen)
+                        }
+                        isSelected={isCompliancePopoverOpen}
+                        hasActiveFilters={complianceFilters.length > 0}
+                        numActiveFilters={
+                          complianceFilters.length > 0
+                            ? complianceFilters.length
+                            : undefined
+                        }
+                      >
+                        Compliance
+                      </EuiFilterButton>
+                    }
+                    isOpen={isCompliancePopoverOpen}
+                    closePopover={() => setIsCompliancePopoverOpen(false)}
+                    panelPaddingSize="none"
+                    anchorPosition="downLeft"
+                  >
+                    <div style={{ width: 200 }}>
+                      {Object.entries(COMPLIANCE_LABELS).map(
+                        ([standard, label]) => (
+                          <EuiFilterSelectItem
+                            key={standard}
+                            checked={
+                              complianceFilters.includes(
+                                standard as ComplianceStandard
+                              )
+                                ? "on"
+                                : undefined
+                            }
+                            onClick={() =>
+                              toggleComplianceFilter(
+                                standard as ComplianceStandard
+                              )
+                            }
+                          >
+                            <EuiFlexGroup
+                              alignItems="center"
+                              gutterSize="s"
+                              responsive={false}
+                            >
+                              <EuiFlexItem grow={false}>
+                                <EuiIcon type="securityApp" size="s" />
+                              </EuiFlexItem>
+                              <EuiFlexItem>{label}</EuiFlexItem>
+                              <EuiFlexItem grow={false}>
+                                <EuiBadge color="hollow">
+                                  {complianceCounts[
+                                    standard as ComplianceStandard
+                                  ] || 0}
+                                </EuiBadge>
+                              </EuiFlexItem>
+                            </EuiFlexGroup>
+                          </EuiFilterSelectItem>
+                        )
+                      )}
+                    </div>
+                  </EuiPopover>
                 </EuiFilterGroup>
               </div>
             )}

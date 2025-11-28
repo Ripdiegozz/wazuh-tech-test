@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useState, useMemo } from 'react';
+import * as React from "react";
+import { useState, useMemo } from "react";
 import {
   EuiBasicTable,
   EuiBasicTableColumn,
@@ -15,12 +15,19 @@ import {
   EuiEmptyPrompt,
   EuiFilterGroup,
   EuiFilterButton,
+  EuiPopover,
+  EuiFilterSelectItem,
+  EuiIcon,
   Criteria,
   Pagination,
-} from '@elastic/eui';
-import { TodoItem, TodoStatus } from '../../../common/types';
-import { formatDate } from '../../utils';
-import { PriorityCell, AssigneeCell, WorkCell } from './shared';
+} from "@elastic/eui";
+import {
+  TodoItem,
+  TodoStatus,
+  ComplianceStandard,
+} from "../../../common/types";
+import { formatDate } from "../../utils";
+import { PriorityCell, AssigneeCell, WorkCell } from "./shared";
 
 interface TableViewProps {
   todos: TodoItem[];
@@ -28,10 +35,10 @@ interface TableViewProps {
   pageIndex: number;
   pageSize: number;
   sortField: string;
-  sortDirection: 'asc' | 'desc';
+  sortDirection: "asc" | "desc";
   isLoading?: boolean;
   onPaginationChange: (page: number, size: number) => void;
-  onSortChange: (field: string, direction: 'asc' | 'desc') => void;
+  onSortChange: (field: string, direction: "asc" | "desc") => void;
   onEditTodo: (todo: TodoItem) => void;
   onDeleteTodo: (id: string) => void;
   onArchiveTodo: (id: string) => void;
@@ -42,19 +49,43 @@ interface TableViewProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: TodoStatus.PLANNED, inputDisplay: <EuiBadge color="default">To Do</EuiBadge> },
-  { value: TodoStatus.IN_PROGRESS, inputDisplay: <EuiBadge color="primary">In Progress</EuiBadge> },
-  { value: TodoStatus.BLOCKED, inputDisplay: <EuiBadge color="warning">Blocked</EuiBadge> },
-  { value: TodoStatus.COMPLETED_SUCCESS, inputDisplay: <EuiBadge color="success">Done</EuiBadge> },
-  { value: TodoStatus.COMPLETED_ERROR, inputDisplay: <EuiBadge color="danger">Error</EuiBadge> },
+  {
+    value: TodoStatus.PLANNED,
+    inputDisplay: <EuiBadge color="default">To Do</EuiBadge>,
+  },
+  {
+    value: TodoStatus.IN_PROGRESS,
+    inputDisplay: <EuiBadge color="primary">In Progress</EuiBadge>,
+  },
+  {
+    value: TodoStatus.BLOCKED,
+    inputDisplay: <EuiBadge color="warning">Blocked</EuiBadge>,
+  },
+  {
+    value: TodoStatus.COMPLETED_SUCCESS,
+    inputDisplay: <EuiBadge color="success">Done</EuiBadge>,
+  },
+  {
+    value: TodoStatus.COMPLETED_ERROR,
+    inputDisplay: <EuiBadge color="danger">Error</EuiBadge>,
+  },
 ];
 
 const STATUS_LABELS: Record<TodoStatus, string> = {
-  [TodoStatus.PLANNED]: 'To Do',
-  [TodoStatus.IN_PROGRESS]: 'In Progress',
-  [TodoStatus.BLOCKED]: 'Blocked',
-  [TodoStatus.COMPLETED_SUCCESS]: 'Done',
-  [TodoStatus.COMPLETED_ERROR]: 'Error',
+  [TodoStatus.PLANNED]: "To Do",
+  [TodoStatus.IN_PROGRESS]: "In Progress",
+  [TodoStatus.BLOCKED]: "Blocked",
+  [TodoStatus.COMPLETED_SUCCESS]: "Done",
+  [TodoStatus.COMPLETED_ERROR]: "Error",
+};
+
+const COMPLIANCE_LABELS: Record<ComplianceStandard, string> = {
+  [ComplianceStandard.PCI_DSS]: "PCI DSS",
+  [ComplianceStandard.ISO_27001]: "ISO 27001",
+  [ComplianceStandard.SOX]: "SOX",
+  [ComplianceStandard.HIPAA]: "HIPAA",
+  [ComplianceStandard.GDPR]: "GDPR",
+  [ComplianceStandard.NIST]: "NIST",
 };
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -80,6 +111,10 @@ export const TableView: React.FC<TableViewProps> = ({
   const [selectedItems, setSelectedItems] = useState<TodoItem[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [statusFilters, setStatusFilters] = useState<TodoStatus[]>([]);
+  const [complianceFilters, setComplianceFilters] = useState<
+    ComplianceStandard[]
+  >([]);
+  const [isCompliancePopoverOpen, setIsCompliancePopoverOpen] = useState(false);
 
   // Toggle status filter
   const toggleStatusFilter = (status: TodoStatus) => {
@@ -87,6 +122,15 @@ export const TableView: React.FC<TableViewProps> = ({
       prev.includes(status)
         ? prev.filter((s) => s !== status)
         : [...prev, status]
+    );
+  };
+
+  // Toggle compliance filter
+  const toggleComplianceFilter = (standard: ComplianceStandard) => {
+    setComplianceFilters((prev) =>
+      prev.includes(standard)
+        ? prev.filter((s) => s !== standard)
+        : [...prev, standard]
     );
   };
 
@@ -107,17 +151,50 @@ export const TableView: React.FC<TableViewProps> = ({
     return counts;
   }, [todos]);
 
-  // Filter items client-side based on selected status filters
+  // Count items by compliance standard (from loaded data)
+  const complianceCounts = useMemo(() => {
+    const counts: Record<ComplianceStandard, number> = {
+      [ComplianceStandard.PCI_DSS]: 0,
+      [ComplianceStandard.ISO_27001]: 0,
+      [ComplianceStandard.SOX]: 0,
+      [ComplianceStandard.HIPAA]: 0,
+      [ComplianceStandard.GDPR]: 0,
+      [ComplianceStandard.NIST]: 0,
+    };
+    todos.forEach((todo) => {
+      todo.complianceStandards?.forEach((standard) => {
+        if (counts[standard] !== undefined) {
+          counts[standard]++;
+        }
+      });
+    });
+    return counts;
+  }, [todos]);
+
+  // Filter items client-side based on selected status and compliance filters
   const filteredTodos = useMemo(() => {
-    if (statusFilters.length === 0) {
-      return todos;
+    let filtered = todos;
+
+    if (statusFilters.length > 0) {
+      filtered = filtered.filter((todo) => statusFilters.includes(todo.status));
     }
-    return todos.filter((todo) => statusFilters.includes(todo.status));
-  }, [todos, statusFilters]);
+
+    if (complianceFilters.length > 0) {
+      filtered = filtered.filter((todo) =>
+        todo.complianceStandards?.some((standard) =>
+          complianceFilters.includes(standard)
+        )
+      );
+    }
+
+    return filtered;
+  }, [todos, statusFilters, complianceFilters]);
 
   // Clear selection when todos change
   React.useEffect(() => {
-    setSelectedItems((prev) => prev.filter((item) => filteredTodos.some((t) => t.id === item.id)));
+    setSelectedItems((prev) =>
+      prev.filter((item) => filteredTodos.some((t) => t.id === item.id))
+    );
   }, [filteredTodos]);
 
   const handleBulkArchive = () => {
@@ -145,9 +222,9 @@ export const TableView: React.FC<TableViewProps> = ({
 
   const columns: EuiBasicTableColumn<TodoItem>[] = [
     {
-      field: 'id',
-      name: 'Work',
-      width: '350px',
+      field: "id",
+      name: "Work",
+      width: "350px",
       render: (id: string, todo: TodoItem) => (
         <WorkCell
           todo={todo}
@@ -167,16 +244,16 @@ export const TableView: React.FC<TableViewProps> = ({
       ),
     },
     {
-      field: 'priority',
-      name: 'Priority',
-      width: '100px',
+      field: "priority",
+      name: "Priority",
+      width: "100px",
       sortable: true,
       render: (priority) => <PriorityCell priority={priority} />,
     },
     {
-      field: 'status',
-      name: 'Status',
-      width: '150px',
+      field: "status",
+      name: "Status",
+      width: "150px",
       sortable: true,
       render: (status: TodoStatus, todo: TodoItem) => (
         <EuiSuperSelect
@@ -188,9 +265,30 @@ export const TableView: React.FC<TableViewProps> = ({
       ),
     },
     {
-      field: 'updatedAt',
-      name: 'Updated',
-      width: '180px',
+      field: "complianceStandards",
+      name: "Compliance",
+      width: "200px",
+      render: (standards: ComplianceStandard[]) =>
+        standards && standards.length > 0 ? (
+          <EuiFlexGroup gutterSize="xs" wrap responsive={false}>
+            {standards.map((standard) => (
+              <EuiFlexItem grow={false} key={standard}>
+                <EuiBadge color="hollow" iconType="securityApp">
+                  {COMPLIANCE_LABELS[standard] || standard}
+                </EuiBadge>
+              </EuiFlexItem>
+            ))}
+          </EuiFlexGroup>
+        ) : (
+          <EuiText size="s" color="subdued">
+            -
+          </EuiText>
+        ),
+    },
+    {
+      field: "updatedAt",
+      name: "Updated",
+      width: "180px",
       sortable: true,
       render: (date: string) => (
         <EuiText size="s" color="subdued">
@@ -199,49 +297,50 @@ export const TableView: React.FC<TableViewProps> = ({
       ),
     },
     {
-      field: 'storyPoints',
-      name: 'Story Points',
-      width: '100px',
+      field: "storyPoints",
+      name: "Story Points",
+      width: "100px",
       sortable: true,
-      align: 'center',
-      render: (points?: number) => (
+      align: "center",
+      render: (points?: number) =>
         points !== undefined && points > 0 ? (
           <EuiBadge color="hollow">{points}</EuiBadge>
         ) : (
-          <EuiText size="s" color="subdued">-</EuiText>
-        )
-      ),
+          <EuiText size="s" color="subdued">
+            -
+          </EuiText>
+        ),
     },
     {
-      field: 'assignee',
-      name: 'Assignee',
-      width: '150px',
+      field: "assignee",
+      name: "Assignee",
+      width: "150px",
       render: (assignee?: string) => <AssigneeCell assignee={assignee} />,
     },
     {
-      name: 'Actions',
-      width: '80px',
+      name: "Actions",
+      width: "80px",
       actions: [
         {
-          name: 'Edit',
-          description: 'Edit this item',
-          icon: 'pencil',
-          type: 'icon',
+          name: "Edit",
+          description: "Edit this item",
+          icon: "pencil",
+          type: "icon",
           onClick: onEditTodo,
         },
         {
-          name: 'Archive',
-          description: 'Archive this item',
-          icon: 'folderClosed',
-          type: 'icon',
+          name: "Archive",
+          description: "Archive this item",
+          icon: "folderClosed",
+          type: "icon",
           onClick: (todo) => onArchiveTodo(todo.id),
         },
         {
-          name: 'Delete',
-          description: 'Delete this item',
-          icon: 'trash',
-          type: 'icon',
-          color: 'danger',
+          name: "Delete",
+          description: "Delete this item",
+          icon: "trash",
+          type: "icon",
+          color: "danger",
           onClick: (todo) => onDeleteTodo(todo.id),
         },
       ],
@@ -250,19 +349,20 @@ export const TableView: React.FC<TableViewProps> = ({
 
   const handleTableChange = (criteria: Criteria<TodoItem>) => {
     const { page: paginationChange, sort: sortChange } = criteria;
-    
+
     // Handle pagination changes
     if (paginationChange) {
       const { index: newPageIndex, size: newPageSize } = paginationChange;
       onPaginationChange(newPageIndex, newPageSize);
     }
-    
+
     // Handle sort changes (only if actually different)
     if (sortChange) {
       const newSortField = String(sortChange.field);
       const newSortDirection = sortChange.direction;
-      const sortHasChanged = newSortField !== sortField || newSortDirection !== sortDirection;
-      
+      const sortHasChanged =
+        newSortField !== sortField || newSortDirection !== sortDirection;
+
       if (sortHasChanged) {
         onSortChange(newSortField, newSortDirection);
       }
@@ -279,14 +379,21 @@ export const TableView: React.FC<TableViewProps> = ({
   return (
     <>
       <div className="todo-table">
-        {/* Status Filter Group - Client-side filtering */}
-        <EuiFlexGroup alignItems="center" gutterSize="m" wrap className="todo-table__filters">
+        {/* Filter Group - Status and Compliance filters */}
+        <EuiFlexGroup
+          alignItems="center"
+          gutterSize="m"
+          wrap
+          className="todo-table__filters"
+        >
           <EuiFlexItem grow={false}>
             <EuiFilterGroup>
               {Object.entries(STATUS_LABELS).map(([status, label]) => (
                 <EuiFilterButton
                   key={status}
-                  hasActiveFilters={statusFilters.includes(status as TodoStatus)}
+                  hasActiveFilters={statusFilters.includes(
+                    status as TodoStatus
+                  )}
                   onClick={() => toggleStatusFilter(status as TodoStatus)}
                   numFilters={statusCounts[status as TodoStatus] || 0}
                   numActiveFilters={
@@ -300,12 +407,84 @@ export const TableView: React.FC<TableViewProps> = ({
               ))}
             </EuiFilterGroup>
           </EuiFlexItem>
-          {statusFilters.length > 0 && (
+
+          {/* Compliance Standards Multi-Select Filter */}
+          <EuiFlexItem grow={false}>
+            <EuiFilterGroup>
+              <EuiPopover
+                id="complianceFilterPopover"
+                button={
+                  <EuiFilterButton
+                    iconType="arrowDown"
+                    onClick={() =>
+                      setIsCompliancePopoverOpen(!isCompliancePopoverOpen)
+                    }
+                    isSelected={isCompliancePopoverOpen}
+                    hasActiveFilters={complianceFilters.length > 0}
+                    numActiveFilters={
+                      complianceFilters.length > 0
+                        ? complianceFilters.length
+                        : undefined
+                    }
+                  >
+                    Compliance
+                  </EuiFilterButton>
+                }
+                isOpen={isCompliancePopoverOpen}
+                closePopover={() => setIsCompliancePopoverOpen(false)}
+                panelPaddingSize="none"
+                anchorPosition="downLeft"
+              >
+                <div style={{ width: 200 }}>
+                  {Object.entries(COMPLIANCE_LABELS).map(
+                    ([standard, label]) => (
+                      <EuiFilterSelectItem
+                        key={standard}
+                        checked={
+                          complianceFilters.includes(
+                            standard as ComplianceStandard
+                          )
+                            ? "on"
+                            : undefined
+                        }
+                        onClick={() =>
+                          toggleComplianceFilter(standard as ComplianceStandard)
+                        }
+                      >
+                        <EuiFlexGroup
+                          alignItems="center"
+                          gutterSize="s"
+                          responsive={false}
+                        >
+                          <EuiFlexItem grow={false}>
+                            <EuiIcon type="securityApp" size="s" />
+                          </EuiFlexItem>
+                          <EuiFlexItem>{label}</EuiFlexItem>
+                          <EuiFlexItem grow={false}>
+                            <EuiBadge color="hollow">
+                              {complianceCounts[
+                                standard as ComplianceStandard
+                              ] || 0}
+                            </EuiBadge>
+                          </EuiFlexItem>
+                        </EuiFlexGroup>
+                      </EuiFilterSelectItem>
+                    )
+                  )}
+                </div>
+              </EuiPopover>
+            </EuiFilterGroup>
+          </EuiFlexItem>
+
+          {(statusFilters.length > 0 || complianceFilters.length > 0) && (
             <EuiFlexItem grow={false}>
               <EuiButton
                 size="s"
                 iconType="cross"
-                onClick={() => setStatusFilters([])}
+                onClick={() => {
+                  setStatusFilters([]);
+                  setComplianceFilters([]);
+                }}
                 color="text"
               >
                 Clear filters
@@ -317,25 +496,48 @@ export const TableView: React.FC<TableViewProps> = ({
 
         {filteredTodos.length > 0 && (
           <>
-            <EuiFlexGroup alignItems="center" gutterSize="m" className="todo-table__bulk-actions">
+            <EuiFlexGroup
+              alignItems="center"
+              gutterSize="m"
+              className="todo-table__bulk-actions"
+            >
               <EuiFlexItem grow={false}>
                 <EuiCheckbox
                   id="select-all-checkbox"
-                  checked={selectedItems.length === filteredTodos.length && filteredTodos.length > 0}
-                  indeterminate={selectedItems.length > 0 && selectedItems.length < filteredTodos.length}
+                  checked={
+                    selectedItems.length === filteredTodos.length &&
+                    filteredTodos.length > 0
+                  }
+                  indeterminate={
+                    selectedItems.length > 0 &&
+                    selectedItems.length < filteredTodos.length
+                  }
                   onChange={handleSelectAll}
-                  label={selectedItems.length > 0 ? `${selectedItems.length} selected` : 'Select all on page'}
+                  label={
+                    selectedItems.length > 0
+                      ? `${selectedItems.length} selected`
+                      : "Select all on page"
+                  }
                 />
               </EuiFlexItem>
               {selectedItems.length > 0 && (
                 <>
                   <EuiFlexItem grow={false}>
-                    <EuiButton size="s" iconType="folderClosed" onClick={handleBulkArchive}>
+                    <EuiButton
+                      size="s"
+                      iconType="folderClosed"
+                      onClick={handleBulkArchive}
+                    >
                       Archive ({selectedItems.length})
                     </EuiButton>
                   </EuiFlexItem>
                   <EuiFlexItem grow={false}>
-                    <EuiButton size="s" iconType="trash" color="danger" onClick={() => setShowDeleteConfirm(true)}>
+                    <EuiButton
+                      size="s"
+                      iconType="trash"
+                      color="danger"
+                      onClick={() => setShowDeleteConfirm(true)}
+                    >
                       Delete ({selectedItems.length})
                     </EuiButton>
                   </EuiFlexItem>
@@ -365,7 +567,12 @@ export const TableView: React.FC<TableViewProps> = ({
               iconType="documents"
               iconColor="subdued"
               title={<h3>No work items yet</h3>}
-              body={<p>Create your first TODO item to get started with tracking your security compliance tasks.</p>}
+              body={
+                <p>
+                  Create your first TODO item to get started with tracking your
+                  security compliance tasks.
+                </p>
+              }
               titleSize="s"
             />
           }
@@ -374,14 +581,20 @@ export const TableView: React.FC<TableViewProps> = ({
 
       {showDeleteConfirm && (
         <EuiConfirmModal
-          title={`Delete ${selectedItems.length} item${selectedItems.length > 1 ? 's' : ''}?`}
+          title={`Delete ${selectedItems.length} item${
+            selectedItems.length > 1 ? "s" : ""
+          }?`}
           onCancel={() => setShowDeleteConfirm(false)}
           onConfirm={handleBulkDelete}
           cancelButtonText="Cancel"
           confirmButtonText="Delete"
           buttonColor="danger"
         >
-          <p>This action cannot be undone. {selectedItems.length > 1 ? 'These items' : 'This item'} will be permanently deleted.</p>
+          <p>
+            This action cannot be undone.{" "}
+            {selectedItems.length > 1 ? "These items" : "This item"} will be
+            permanently deleted.
+          </p>
         </EuiConfirmModal>
       )}
     </>

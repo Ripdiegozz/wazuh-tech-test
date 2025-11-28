@@ -41,7 +41,7 @@ A full-featured TODO application plugin for OpenSearch Dashboards, designed for 
 - **Tags & Compliance Standards**: Categorize tasks by tags and security standards
 - **Assignee Management**: Assign tasks to team members
 - **Story Points**: Track effort estimation
-- **Filtering**: Filter by status and priority
+- **Filtering**: Filter by status, priority, and compliance standards
 - **Keyboard Shortcuts**: Quick navigation (N for new, / for search)
 - **URL State Sync**: Share filtered views via URL
 
@@ -62,6 +62,7 @@ A full-featured TODO application plugin for OpenSearch Dashboards, designed for 
 ![Statistics Dashboard](./docs/screenshots/statistics.png)
 
 ### Create/Edit TODO Modal
+
 ![Create TODO Modal](./docs/screenshots/create-work-item.png)
 ![TODO Details Modal](./docs/screenshots/todo-details.png)
 
