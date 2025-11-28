@@ -3,18 +3,18 @@
  * Using @testing-library/react instead of react-hooks to avoid
  * React version conflicts in the Docker container.
  */
-import * as React from "react";
-import { render, screen, act } from "@testing-library/react";
-import { TodoProvider, useTodoStore } from "./todo-store";
-import { TodoStatus, TodoPriority, TodoItem } from "../../common/types";
+import * as React from 'react';
+import { render, screen, act } from '@testing-library/react';
+import { TodoProvider, useTodoStore } from './todo-store';
+import { TodoStatus, TodoPriority, TodoItem } from '../../common/types';
 
 const mockTodo: TodoItem = {
-  id: "test-1",
-  title: "Test Todo",
+  id: 'test-1',
+  title: 'Test Todo',
   status: TodoStatus.PLANNED,
   priority: TodoPriority.MEDIUM,
-  createdAt: "2024-01-01",
-  updatedAt: "2024-01-01",
+  createdAt: '2024-01-01',
+  updatedAt: '2024-01-01',
   archived: false,
   tags: [],
   complianceStandards: [],
@@ -25,7 +25,7 @@ const StoreTestComponent: React.FC<{
   onStore?: (store: ReturnType<typeof useTodoStore>) => void;
 }> = ({ onStore }) => {
   const store = useTodoStore();
-
+  
   // Call callback with store reference
   React.useEffect(() => {
     if (onStore) {
@@ -40,9 +40,7 @@ const StoreTestComponent: React.FC<{
       <div data-testid="loading">{String(store.loading)}</div>
       <div data-testid="is-modal-open">{String(store.isModalOpen)}</div>
       <div data-testid="filters-query">{store.filters.query}</div>
-      <div data-testid="detail-panel-todo">
-        {store.detailPanelTodo?.id || "none"}
-      </div>
+      <div data-testid="detail-panel-todo">{store.detailPanelTodo?.id || 'none'}</div>
       {store.todos.length > 0 && (
         <div data-testid="first-todo-title">{store.todos[0].title}</div>
       )}
@@ -50,7 +48,7 @@ const StoreTestComponent: React.FC<{
   );
 };
 
-describe("TodoStore", () => {
+describe('TodoStore', () => {
   let storeRef: ReturnType<typeof useTodoStore> | null = null;
 
   const renderWithProvider = () => {
@@ -69,29 +67,29 @@ describe("TodoStore", () => {
     storeRef = null;
   });
 
-  it("should have correct initial state", () => {
+  it('should have correct initial state', () => {
     renderWithProvider();
 
-    expect(screen.getByTestId("todos-count")).toHaveTextContent("0");
-    expect(screen.getByTestId("current-view")).toHaveTextContent("board");
-    expect(screen.getByTestId("loading")).toHaveTextContent("false");
+    expect(screen.getByTestId('todos-count')).toHaveTextContent('0');
+    expect(screen.getByTestId('current-view')).toHaveTextContent('board');
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
   });
 
-  it("should set and add todos", () => {
+  it('should set and add todos', () => {
     renderWithProvider();
 
     act(() => {
       storeRef?.setTodos([mockTodo]);
     });
-    expect(screen.getByTestId("todos-count")).toHaveTextContent("1");
+    expect(screen.getByTestId('todos-count')).toHaveTextContent('1');
 
     act(() => {
-      storeRef?.addTodo({ ...mockTodo, id: "test-2" });
+      storeRef?.addTodo({ ...mockTodo, id: 'test-2' });
     });
-    expect(screen.getByTestId("todos-count")).toHaveTextContent("2");
+    expect(screen.getByTestId('todos-count')).toHaveTextContent('2');
   });
 
-  it("should update a todo", () => {
+  it('should update a todo', () => {
     renderWithProvider();
 
     act(() => {
@@ -99,47 +97,47 @@ describe("TodoStore", () => {
     });
 
     act(() => {
-      storeRef?.updateTodoInStore("test-1", { title: "Updated" });
+      storeRef?.updateTodoInStore('test-1', { title: 'Updated' });
     });
 
-    expect(screen.getByTestId("first-todo-title")).toHaveTextContent("Updated");
+    expect(screen.getByTestId('first-todo-title')).toHaveTextContent('Updated');
   });
 
-  it("should change view and manage filters", () => {
+  it('should change view and manage filters', () => {
     renderWithProvider();
 
     act(() => {
-      storeRef?.setView("table");
+      storeRef?.setView('table');
     });
-    expect(screen.getByTestId("current-view")).toHaveTextContent("table");
+    expect(screen.getByTestId('current-view')).toHaveTextContent('table');
 
     act(() => {
-      storeRef?.setFilters({ query: "search" });
+      storeRef?.setFilters({ query: 'search' });
     });
-    expect(screen.getByTestId("filters-query")).toHaveTextContent("search");
+    expect(screen.getByTestId('filters-query')).toHaveTextContent('search');
 
     act(() => {
       storeRef?.resetFilters();
     });
-    expect(screen.getByTestId("filters-query")).toHaveTextContent("");
+    expect(screen.getByTestId('filters-query')).toHaveTextContent('');
   });
 
-  it("should toggle modal and detail panel", () => {
+  it('should toggle modal and detail panel', () => {
     renderWithProvider();
 
     act(() => {
       storeRef?.openCreateModal();
     });
-    expect(screen.getByTestId("is-modal-open")).toHaveTextContent("true");
+    expect(screen.getByTestId('is-modal-open')).toHaveTextContent('true');
 
     act(() => {
       storeRef?.closeModal();
     });
-    expect(screen.getByTestId("is-modal-open")).toHaveTextContent("false");
+    expect(screen.getByTestId('is-modal-open')).toHaveTextContent('false');
 
     act(() => {
       storeRef?.openDetailPanel(mockTodo);
     });
-    expect(screen.getByTestId("detail-panel-todo")).toHaveTextContent("test-1");
+    expect(screen.getByTestId('detail-panel-todo')).toHaveTextContent('test-1');
   });
 });
