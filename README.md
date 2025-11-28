@@ -102,11 +102,25 @@ A full-featured TODO application plugin for OpenSearch Dashboards, designed for 
 ### Prerequisites
 
 - Docker Desktop or Docker Engine with Compose
+- Node.js (for installing dependencies locally)
 - Minimum 4GB RAM available for containers
 
-### 1. Start the Development Environment
+### 1. Install Dependencies
 
 ```bash
+# Navigate to the plugin source directory
+cd src
+
+# Install dependencies
+npm install
+```
+
+### 2. Start the Development Environment
+
+```bash
+# Go back to root directory
+cd ..
+
 # Start containers
 docker compose up -d
 
@@ -114,7 +128,7 @@ docker compose up -d
 docker compose ps
 ```
 
-### 2. Start OpenSearch Dashboards
+### 3. Start OpenSearch Dashboards
 
 ```bash
 # Access the container
@@ -133,7 +147,7 @@ Wait until you see:
 server    log   [...] [info][server][OpenSearchDashboards][http] http server running at http://0.0.0.0:5601
 ```
 
-### 3. Access the Application
+### 4. Access the Application
 
 - **URL**: http://localhost:5601
 - **Username**: `admin`
