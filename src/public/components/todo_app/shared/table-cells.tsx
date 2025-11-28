@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import {
   EuiIcon,
   EuiToolTip,
@@ -8,13 +8,11 @@ import {
   EuiLink,
   EuiCheckbox,
   EuiLoadingSpinner,
-} from '@elastic/eui';
-import { TodoItem, TodoPriority } from '../../../../common/types';
-import { PRIORITY_CONFIG } from '../../../constants';
-import { formatId, getAssigneeInitials } from '../../../utils';
+} from "@elastic/eui";
+import { TodoItem, TodoPriority } from "../../../../common/types";
+import { PRIORITY_CONFIG } from "../../../constants";
+import { formatId, getAssigneeInitials } from "../../../utils";
 
-// Priority Cell
-// Renders priority with icon and label
 interface PriorityCellProps {
   priority: TodoPriority;
 }
@@ -39,15 +37,17 @@ export const PriorityCell: React.FC<PriorityCellProps> = ({ priority }) => {
   );
 };
 
-// Assignee Cell
-// Renders assignee with avatar and name
 interface AssigneeCellProps {
   assignee?: string;
 }
 
 export const AssigneeCell: React.FC<AssigneeCellProps> = ({ assignee }) => {
   if (!assignee) {
-    return <EuiText size="s" color="subdued">Unassigned</EuiText>;
+    return (
+      <EuiText size="s" color="subdued">
+        Unassigned
+      </EuiText>
+    );
   }
 
   return (
@@ -60,8 +60,6 @@ export const AssigneeCell: React.FC<AssigneeCellProps> = ({ assignee }) => {
   );
 };
 
-// Work Cell
-// Renders the work item with checkbox, icon, id, and title
 interface WorkCellProps {
   todo: TodoItem;
   isSelected: boolean;
@@ -78,8 +76,8 @@ export const WorkCell: React.FC<WorkCellProps> = ({
   isPending,
   onSelect,
   onEdit,
-  icon = 'document',
-  checkboxIdPrefix = 'checkbox',
+  icon = "document",
+  checkboxIdPrefix = "checkbox",
 }) => {
   const content = (
     <>
@@ -89,7 +87,11 @@ export const WorkCell: React.FC<WorkCellProps> = ({
   );
 
   return (
-    <div className={`todo-table__work-cell ${isPending ? 'todo-table__work-cell--pending' : ''}`}>
+    <div
+      className={`todo-table__work-cell ${
+        isPending ? "todo-table__work-cell--pending" : ""
+      }`}
+    >
       {isPending ? (
         <EuiLoadingSpinner size="s" />
       ) : (
@@ -109,8 +111,6 @@ export const WorkCell: React.FC<WorkCellProps> = ({
   );
 };
 
-// Date Cell
-// Renders a formatted date
 interface DateCellProps {
   date?: string;
   formatter: (date?: string) => string;
@@ -123,4 +123,3 @@ export const DateCell: React.FC<DateCellProps> = ({ date, formatter }) => {
     </EuiText>
   );
 };
-

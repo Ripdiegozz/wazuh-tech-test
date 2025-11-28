@@ -1,3 +1,1 @@
-// Utils exports
-export * from './table-helpers';
-
+export * from "./table-helpers";

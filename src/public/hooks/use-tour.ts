@@ -1,7 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
-// Local Storage Key
-const TOUR_STORAGE_KEY = 'wazuh_todo_tour_completed';
+const TOUR_STORAGE_KEY = "wazuh_todo_tour_completed";
 
 /**
  * Hook to manage the application tour state
@@ -11,7 +10,7 @@ export function useTour() {
   // Initialize state from localStorage
   const [isTourActive, setIsTourActive] = useState(() => {
     try {
-      return localStorage.getItem(TOUR_STORAGE_KEY) !== 'true';
+      return localStorage.getItem(TOUR_STORAGE_KEY) !== "true";
     } catch {
       // If localStorage is not available, don't show tour
       return false;
@@ -25,7 +24,7 @@ export function useTour() {
    */
   const completeTour = useCallback(() => {
     try {
-      localStorage.setItem(TOUR_STORAGE_KEY, 'true');
+      localStorage.setItem(TOUR_STORAGE_KEY, "true");
     } catch {
       // Ignore localStorage errors
     }
@@ -87,4 +86,3 @@ export function useTour() {
     startTour,
   };
 }
-

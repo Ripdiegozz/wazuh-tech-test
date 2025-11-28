@@ -1,21 +1,20 @@
-import { IRouter, CoreSetup, Logger } from 'src/core/server';
-import { schema } from '@osd/config-schema';
-import { TodoService } from '../services/todo.service';
-import { OpenSearchService } from '../services/opensearch.service';
-import { 
-  createTodoSchema, 
-  updateTodoSchema, 
+import { IRouter, CoreSetup, Logger } from "src/core/server";
+import { schema } from "@osd/config-schema";
+import { TodoService } from "../services/todo.service";
+import { OpenSearchService } from "../services/opensearch.service";
+import {
+  createTodoSchema,
+  updateTodoSchema,
   searchTodoSchema,
   idParamSchema,
   bulkIdsSchema,
   bulkUpdateStatusSchema,
   bulkUpdatePrioritySchema,
   bulkAssignSchema,
-} from '../../common/schemas/todo_schema';
-import { TodoSearchParams, TodoStatus, TodoPriority } from '../../common/types';
-import { generateTodos, SEED_CONFIG } from '../scripts/seed-todos';
+} from "../../common/schemas/todo_schema";
+import { TodoSearchParams, TodoStatus, TodoPriority } from "../../common/types";
+import { generateTodos, SEED_CONFIG } from "../scripts/seed-todos";
 
-// Helper to create TodoService instance
 function createTodoService(context: any, logger: Logger): TodoService {
   const client = context.core.opensearch.client.asCurrentUser;
   const osService = new OpenSearchService(logger);
@@ -23,7 +22,6 @@ function createTodoService(context: any, logger: Logger): TodoService {
   return new TodoService(osService, logger);
 }
 
-// Parse query parameters from strings to proper types
 function parseSearchParams(query: any): TodoSearchParams {
   const params: TodoSearchParams = {};
 
@@ -39,29 +37,33 @@ function parseSearchParams(query: any): TodoSearchParams {
     params.status = Array.isArray(query.status) ? query.status : [query.status];
   }
   if (query.priority) {
-    params.priority = Array.isArray(query.priority) ? query.priority : [query.priority];
+    params.priority = Array.isArray(query.priority)
+      ? query.priority
+      : [query.priority];
   }
   if (query.tags) {
     params.tags = Array.isArray(query.tags) ? query.tags : [query.tags];
   }
   if (query.complianceStandards) {
-    params.complianceStandards = Array.isArray(query.complianceStandards) 
-      ? query.complianceStandards 
+    params.complianceStandards = Array.isArray(query.complianceStandards)
+      ? query.complianceStandards
       : [query.complianceStandards];
   }
 
   // Parse numbers
   if (query.page !== undefined) {
-    params.page = typeof query.page === 'string' ? parseInt(query.page, 10) : query.page;
+    params.page =
+      typeof query.page === "string" ? parseInt(query.page, 10) : query.page;
   }
   if (query.size !== undefined) {
-    params.size = typeof query.size === 'string' ? parseInt(query.size, 10) : query.size;
+    params.size =
+      typeof query.size === "string" ? parseInt(query.size, 10) : query.size;
   }
 
   // Parse boolean
   if (query.archived !== undefined) {
-    if (typeof query.archived === 'string') {
-      params.archived = query.archived === 'true';
+    if (typeof query.archived === "string") {
+      params.archived = query.archived === "true";
     } else {
       params.archived = query.archived;
     }
@@ -70,10 +72,8 @@ function parseSearchParams(query: any): TodoSearchParams {
   return params;
 }
 
-
-// Register TODO API routes
 export function registerTodoRoutes(
-  router: IRouter, 
+  router: IRouter,
   core: CoreSetup,
   logger: Logger
 ) {
@@ -84,7 +84,7 @@ export function registerTodoRoutes(
   // GET /api/custom_plugin/todos - List all TODOs
   router.get(
     {
-      path: '/api/custom_plugin/todos',
+      path: "/api/custom_plugin/todos",
       validate: {
         query: searchTodoSchema,
       },
@@ -94,21 +94,21 @@ export function registerTodoRoutes(
         const service = createTodoService(context, logger);
         const searchParams = parseSearchParams(request.query || {});
         const results = await service.searchTodos(searchParams);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
-            data: results 
-          } 
+            data: results,
+          },
         });
       } catch (error) {
-        logger.error('Error listing TODOs', error);
+        logger.error("Error listing TODOs", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to list TODO items',
-            error: error.message 
+            message: "Failed to list TODO items",
+            error: error.message,
           },
         });
       }
@@ -118,7 +118,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos - Create TODO
   router.post(
     {
-      path: '/api/custom_plugin/todos',
+      path: "/api/custom_plugin/todos",
       validate: {
         body: createTodoSchema,
       },
@@ -127,21 +127,21 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const todo = await service.createTodo(request.body);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
-            data: todo 
-          } 
+            data: todo,
+          },
         });
       } catch (error) {
-        logger.error('Error creating TODO', error);
+        logger.error("Error creating TODO", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to create TODO item',
-            error: error.message 
+            message: "Failed to create TODO item",
+            error: error.message,
           },
         });
       }
@@ -151,7 +151,7 @@ export function registerTodoRoutes(
   // GET /api/custom_plugin/todos/{id} - Get TODO by ID
   router.get(
     {
-      path: '/api/custom_plugin/todos/{id}',
+      path: "/api/custom_plugin/todos/{id}",
       validate: {
         params: idParamSchema,
       },
@@ -160,30 +160,30 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const todo = await service.getTodoById(request.params.id);
-        
+
         if (!todo) {
-          return response.notFound({ 
-            body: { 
+          return response.notFound({
+            body: {
               success: false,
-              message: 'TODO item not found' 
-            } 
+              message: "TODO item not found",
+            },
           });
         }
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
-            data: todo 
-          } 
+            data: todo,
+          },
         });
       } catch (error) {
-        logger.error('Error fetching TODO', error);
+        logger.error("Error fetching TODO", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to fetch TODO item',
-            error: error.message 
+            message: "Failed to fetch TODO item",
+            error: error.message,
           },
         });
       }
@@ -193,7 +193,7 @@ export function registerTodoRoutes(
   // PUT /api/custom_plugin/todos/{id} - Update TODO
   router.put(
     {
-      path: '/api/custom_plugin/todos/{id}',
+      path: "/api/custom_plugin/todos/{id}",
       validate: {
         params: idParamSchema,
         body: updateTodoSchema,
@@ -203,29 +203,29 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const todo = await service.updateTodo(request.params.id, request.body);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
-            data: todo 
-          } 
+            data: todo,
+          },
         });
       } catch (error: any) {
-        if (error.message.includes('not found')) {
-          return response.notFound({ 
-            body: { 
+        if (error.message.includes("not found")) {
+          return response.notFound({
+            body: {
               success: false,
-              message: error.message 
-            } 
+              message: error.message,
+            },
           });
         }
-        logger.error('Error updating TODO', error);
+        logger.error("Error updating TODO", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to update TODO item',
-            error: error.message 
+            message: "Failed to update TODO item",
+            error: error.message,
           },
         });
       }
@@ -235,7 +235,7 @@ export function registerTodoRoutes(
   // DELETE /api/custom_plugin/todos/{id} - Delete TODO
   router.delete(
     {
-      path: '/api/custom_plugin/todos/{id}',
+      path: "/api/custom_plugin/todos/{id}",
       validate: {
         params: idParamSchema,
       },
@@ -244,21 +244,21 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         await service.deleteTodo(request.params.id);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
-            message: 'TODO item deleted successfully' 
-          } 
+            message: "TODO item deleted successfully",
+          },
         });
       } catch (error) {
-        logger.error('Error deleting TODO', error);
+        logger.error("Error deleting TODO", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to delete TODO item',
-            error: error.message 
+            message: "Failed to delete TODO item",
+            error: error.message,
           },
         });
       }
@@ -272,7 +272,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/search - Search TODOs
   router.post(
     {
-      path: '/api/custom_plugin/todos/search',
+      path: "/api/custom_plugin/todos/search",
       validate: {
         body: searchTodoSchema,
       },
@@ -281,21 +281,21 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const results = await service.searchTodos(request.body);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
-            data: results 
-          } 
+            data: results,
+          },
         });
       } catch (error) {
-        logger.error('Error searching TODOs', error);
+        logger.error("Error searching TODOs", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to search TODO items',
-            error: error.message 
+            message: "Failed to search TODO items",
+            error: error.message,
           },
         });
       }
@@ -305,28 +305,28 @@ export function registerTodoRoutes(
   // GET /api/custom_plugin/todos/statistics - Get statistics
   router.get(
     {
-      path: '/api/custom_plugin/todos/statistics',
+      path: "/api/custom_plugin/todos/statistics",
       validate: false,
     },
     async (context, request, response) => {
       try {
         const service = createTodoService(context, logger);
         const stats = await service.getStatistics();
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
-            data: stats 
-          } 
+            data: stats,
+          },
         });
       } catch (error) {
-        logger.error('Error fetching statistics', error);
+        logger.error("Error fetching statistics", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to fetch statistics',
-            error: error.message 
+            message: "Failed to fetch statistics",
+            error: error.message,
           },
         });
       }
@@ -340,7 +340,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/{id}/archive - Archive TODO
   router.post(
     {
-      path: '/api/custom_plugin/todos/{id}/archive',
+      path: "/api/custom_plugin/todos/{id}/archive",
       validate: {
         params: idParamSchema,
       },
@@ -349,30 +349,30 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const todo = await service.archiveTodo(request.params.id);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
             data: todo,
-            message: 'TODO item archived successfully'
-          } 
+            message: "TODO item archived successfully",
+          },
         });
       } catch (error: any) {
-        if (error.message.includes('not found')) {
-          return response.notFound({ 
-            body: { 
+        if (error.message.includes("not found")) {
+          return response.notFound({
+            body: {
               success: false,
-              message: error.message 
-            } 
+              message: error.message,
+            },
           });
         }
-        logger.error('Error archiving TODO', error);
+        logger.error("Error archiving TODO", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to archive TODO item',
-            error: error.message 
+            message: "Failed to archive TODO item",
+            error: error.message,
           },
         });
       }
@@ -382,7 +382,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/{id}/restore - Restore archived TODO
   router.post(
     {
-      path: '/api/custom_plugin/todos/{id}/restore',
+      path: "/api/custom_plugin/todos/{id}/restore",
       validate: {
         params: idParamSchema,
       },
@@ -391,30 +391,30 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const todo = await service.restoreTodo(request.params.id);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
             data: todo,
-            message: 'TODO item restored successfully'
-          } 
+            message: "TODO item restored successfully",
+          },
         });
       } catch (error: any) {
-        if (error.message.includes('not found')) {
-          return response.notFound({ 
-            body: { 
+        if (error.message.includes("not found")) {
+          return response.notFound({
+            body: {
               success: false,
-              message: error.message 
-            } 
+              message: error.message,
+            },
           });
         }
-        logger.error('Error restoring TODO', error);
+        logger.error("Error restoring TODO", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to restore TODO item',
-            error: error.message 
+            message: "Failed to restore TODO item",
+            error: error.message,
           },
         });
       }
@@ -424,7 +424,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/{id}/reorder - Reorder TODO (move to position in column)
   router.post(
     {
-      path: '/api/custom_plugin/todos/{id}/reorder',
+      path: "/api/custom_plugin/todos/{id}/reorder",
       validate: {
         params: idParamSchema,
         body: schema.object({
@@ -438,34 +438,34 @@ export function registerTodoRoutes(
         const service = createTodoService(context, logger);
         const { status, position } = request.body;
         const todo = await service.reorderTodo(
-          request.params.id, 
-          status as TodoStatus, 
+          request.params.id,
+          status as TodoStatus,
           position
         );
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
             data: todo,
-            message: 'TODO item reordered successfully'
-          } 
+            message: "TODO item reordered successfully",
+          },
         });
       } catch (error: any) {
-        if (error.message.includes('not found')) {
-          return response.notFound({ 
-            body: { 
+        if (error.message.includes("not found")) {
+          return response.notFound({
+            body: {
               success: false,
-              message: error.message 
-            } 
+              message: error.message,
+            },
           });
         }
-        logger.error('Error reordering TODO', error);
+        logger.error("Error reordering TODO", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to reorder TODO item',
-            error: error.message 
+            message: "Failed to reorder TODO item",
+            error: error.message,
           },
         });
       }
@@ -479,7 +479,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/bulk/delete - Bulk delete TODOs
   router.post(
     {
-      path: '/api/custom_plugin/todos/bulk/delete',
+      path: "/api/custom_plugin/todos/bulk/delete",
       validate: {
         body: bulkIdsSchema,
       },
@@ -488,22 +488,22 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const result = await service.bulkDelete(request.body.ids);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: result.success,
             data: result,
-            message: `Deleted ${result.processed} TODO items`
-          } 
+            message: `Deleted ${result.processed} TODO items`,
+          },
         });
       } catch (error) {
-        logger.error('Error bulk deleting TODOs', error);
+        logger.error("Error bulk deleting TODOs", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to bulk delete TODO items',
-            error: error.message 
+            message: "Failed to bulk delete TODO items",
+            error: error.message,
           },
         });
       }
@@ -513,7 +513,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/bulk/archive - Bulk archive TODOs
   router.post(
     {
-      path: '/api/custom_plugin/todos/bulk/archive',
+      path: "/api/custom_plugin/todos/bulk/archive",
       validate: {
         body: bulkIdsSchema,
       },
@@ -522,22 +522,22 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const result = await service.bulkArchive(request.body.ids);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: result.success,
             data: result,
-            message: `Archived ${result.processed} TODO items`
-          } 
+            message: `Archived ${result.processed} TODO items`,
+          },
         });
       } catch (error) {
-        logger.error('Error bulk archiving TODOs', error);
+        logger.error("Error bulk archiving TODOs", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to bulk archive TODO items',
-            error: error.message 
+            message: "Failed to bulk archive TODO items",
+            error: error.message,
           },
         });
       }
@@ -547,7 +547,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/bulk/restore - Bulk restore TODOs
   router.post(
     {
-      path: '/api/custom_plugin/todos/bulk/restore',
+      path: "/api/custom_plugin/todos/bulk/restore",
       validate: {
         body: bulkIdsSchema,
       },
@@ -556,22 +556,22 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const result = await service.bulkRestore(request.body.ids);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: result.success,
             data: result,
-            message: `Restored ${result.processed} TODO items`
-          } 
+            message: `Restored ${result.processed} TODO items`,
+          },
         });
       } catch (error) {
-        logger.error('Error bulk restoring TODOs', error);
+        logger.error("Error bulk restoring TODOs", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to bulk restore TODO items',
-            error: error.message 
+            message: "Failed to bulk restore TODO items",
+            error: error.message,
           },
         });
       }
@@ -581,7 +581,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/bulk/status - Bulk update status
   router.post(
     {
-      path: '/api/custom_plugin/todos/bulk/status',
+      path: "/api/custom_plugin/todos/bulk/status",
       validate: {
         body: bulkUpdateStatusSchema,
       },
@@ -590,23 +590,26 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const { ids, status } = request.body;
-        const result = await service.bulkUpdateStatus(ids, status as TodoStatus);
-        
-        return response.ok({ 
-          body: { 
+        const result = await service.bulkUpdateStatus(
+          ids,
+          status as TodoStatus
+        );
+
+        return response.ok({
+          body: {
             success: result.success,
             data: result,
-            message: `Updated status of ${result.processed} TODO items to "${status}"`
-          } 
+            message: `Updated status of ${result.processed} TODO items to "${status}"`,
+          },
         });
       } catch (error) {
-        logger.error('Error bulk updating status', error);
+        logger.error("Error bulk updating status", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to bulk update status',
-            error: error.message 
+            message: "Failed to bulk update status",
+            error: error.message,
           },
         });
       }
@@ -616,7 +619,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/bulk/priority - Bulk update priority
   router.post(
     {
-      path: '/api/custom_plugin/todos/bulk/priority',
+      path: "/api/custom_plugin/todos/bulk/priority",
       validate: {
         body: bulkUpdatePrioritySchema,
       },
@@ -625,23 +628,26 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const { ids, priority } = request.body;
-        const result = await service.bulkUpdatePriority(ids, priority as TodoPriority);
-        
-        return response.ok({ 
-          body: { 
+        const result = await service.bulkUpdatePriority(
+          ids,
+          priority as TodoPriority
+        );
+
+        return response.ok({
+          body: {
             success: result.success,
             data: result,
-            message: `Updated priority of ${result.processed} TODO items to "${priority}"`
-          } 
+            message: `Updated priority of ${result.processed} TODO items to "${priority}"`,
+          },
         });
       } catch (error) {
-        logger.error('Error bulk updating priority', error);
+        logger.error("Error bulk updating priority", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to bulk update priority',
-            error: error.message 
+            message: "Failed to bulk update priority",
+            error: error.message,
           },
         });
       }
@@ -651,7 +657,7 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/bulk/assign - Bulk assign TODOs
   router.post(
     {
-      path: '/api/custom_plugin/todos/bulk/assign',
+      path: "/api/custom_plugin/todos/bulk/assign",
       validate: {
         body: bulkAssignSchema,
       },
@@ -661,24 +667,24 @@ export function registerTodoRoutes(
         const service = createTodoService(context, logger);
         const { ids, assignee } = request.body;
         const result = await service.bulkAssign(ids, assignee);
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: result.success,
             data: result,
-            message: assignee 
+            message: assignee
               ? `Assigned ${result.processed} TODO items to "${assignee}"`
-              : `Unassigned ${result.processed} TODO items`
-          } 
+              : `Unassigned ${result.processed} TODO items`,
+          },
         });
       } catch (error) {
-        logger.error('Error bulk assigning TODOs', error);
+        logger.error("Error bulk assigning TODOs", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to bulk assign TODO items',
-            error: error.message 
+            message: "Failed to bulk assign TODO items",
+            error: error.message,
           },
         });
       }
@@ -692,10 +698,14 @@ export function registerTodoRoutes(
   // POST /api/custom_plugin/todos/seed - Seed test data (for performance testing)
   router.post(
     {
-      path: '/api/custom_plugin/todos/seed',
+      path: "/api/custom_plugin/todos/seed",
       validate: {
         body: schema.object({
-          count: schema.number({ defaultValue: SEED_CONFIG.TOTAL_TODOS, min: 1, max: 10000 }),
+          count: schema.number({
+            defaultValue: SEED_CONFIG.TOTAL_TODOS,
+            min: 1,
+            max: 10000,
+          }),
         }),
       },
     },
@@ -703,15 +713,15 @@ export function registerTodoRoutes(
       try {
         const service = createTodoService(context, logger);
         const count = request.body.count;
-        
+
         logger.info(`Starting seed of ${count} TODO items...`);
         const startTime = Date.now();
-        
+
         // Generate and insert in batches
         const batchSize = SEED_CONFIG.BATCH_SIZE;
         let totalProcessed = 0;
         let totalFailed = 0;
-        
+
         for (let i = 0; i < count; i += batchSize) {
           const batchCount = Math.min(batchSize, count - i);
           const todos = generateTodos(batchCount);
@@ -719,12 +729,14 @@ export function registerTodoRoutes(
           totalProcessed += result.processed;
           totalFailed += result.failed;
         }
-        
+
         const duration = Date.now() - startTime;
-        logger.info(`Seed completed: ${totalProcessed} created, ${totalFailed} failed in ${duration}ms`);
-        
-        return response.ok({ 
-          body: { 
+        logger.info(
+          `Seed completed: ${totalProcessed} created, ${totalFailed} failed in ${duration}ms`
+        );
+
+        return response.ok({
+          body: {
             success: totalFailed === 0,
             data: {
               requested: count,
@@ -732,17 +744,17 @@ export function registerTodoRoutes(
               failed: totalFailed,
               duration: `${duration}ms`,
             },
-            message: `Seeded ${totalProcessed} TODO items in ${duration}ms`
-          } 
+            message: `Seeded ${totalProcessed} TODO items in ${duration}ms`,
+          },
         });
       } catch (error) {
-        logger.error('Error seeding TODOs', error);
+        logger.error("Error seeding TODOs", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to seed TODO items',
-            error: error.message 
+            message: "Failed to seed TODO items",
+            error: error.message,
           },
         });
       }
@@ -752,29 +764,29 @@ export function registerTodoRoutes(
   // DELETE /api/custom_plugin/todos/all - Delete all TODOs (for cleanup after testing)
   router.delete(
     {
-      path: '/api/custom_plugin/todos/all',
+      path: "/api/custom_plugin/todos/all",
       validate: false,
     },
     async (context, request, response) => {
       try {
         const service = createTodoService(context, logger);
         const result = await service.deleteAll();
-        
-        return response.ok({ 
-          body: { 
+
+        return response.ok({
+          body: {
             success: true,
             data: result,
-            message: `Deleted ${result.deleted} TODO items`
-          } 
+            message: `Deleted ${result.deleted} TODO items`,
+          },
         });
       } catch (error) {
-        logger.error('Error deleting all TODOs', error);
+        logger.error("Error deleting all TODOs", error);
         return response.customError({
           statusCode: 500,
-          body: { 
+          body: {
             success: false,
-            message: 'Failed to delete all TODO items',
-            error: error.message 
+            message: "Failed to delete all TODO items",
+            error: error.message,
           },
         });
       }

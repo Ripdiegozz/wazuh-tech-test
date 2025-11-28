@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import {
   EuiTourStep,
   EuiText,
@@ -7,13 +7,13 @@ import {
   EuiSpacer,
   useEuiTour,
   EuiTourStepProps,
-} from '@elastic/eui';
+} from "@elastic/eui";
 
 // Tour step configurations
 const tourStepsConfig = [
   {
     step: 1,
-    title: 'Welcome to Security TODO Manager! 👋',
+    title: "Welcome to Security TODO Manager! 👋",
     content: (
       <EuiText size="s">
         <p>
@@ -22,52 +22,55 @@ const tourStepsConfig = [
         </p>
       </EuiText>
     ),
-    anchorPosition: 'downCenter' as const,
+    anchorPosition: "downCenter" as const,
   },
   {
     step: 2,
-    title: 'Create Tasks',
+    title: "Create Tasks",
     content: (
       <EuiText size="s">
         <p>
-          Click the <strong>"+ Create"</strong> button to create a new task.
-          Add priority, assignee, due date, and compliance standards.
+          Click the <strong>"+ Create"</strong> button to create a new task. Add
+          priority, assignee, due date, and compliance standards.
         </p>
       </EuiText>
     ),
-    anchorPosition: 'downCenter' as const,
+    anchorPosition: "downCenter" as const,
   },
   {
     step: 3,
-    title: 'Switch Views',
+    title: "Switch Views",
     content: (
       <EuiText size="s">
         <p>
-          Toggle between <strong>Board</strong>, <strong>Table</strong>,{' '}
+          Toggle between <strong>Board</strong>, <strong>Table</strong>,{" "}
           <strong>Archived</strong>, and <strong>Stats</strong> views.
         </p>
         <p>
-          <em>Pro tip: Press <strong>1</strong>, <strong>2</strong>, <strong>3</strong>, or <strong>4</strong> to switch views quickly! 
-          Check the <strong>⌨️</strong> button for all shortcuts.</em>
+          <em>
+            Pro tip: Press <strong>1</strong>, <strong>2</strong>,{" "}
+            <strong>3</strong>, or <strong>4</strong> to switch views quickly!
+            Check the <strong>⌨️</strong> button for all shortcuts.
+          </em>
         </p>
       </EuiText>
     ),
-    anchorPosition: 'downCenter' as const,
+    anchorPosition: "downCenter" as const,
   },
   {
     step: 4,
-    title: 'Search & Filter',
+    title: "Search & Filter",
     content: (
       <EuiText size="s">
+        <p>Search by title or description. Filter by priority and status.</p>
         <p>
-          Search by title or description. Filter by priority and status.
-        </p>
-        <p>
-          <em>Pro tip: Press <strong>/</strong> to focus the search bar!</em>
+          <em>
+            Pro tip: Press <strong>/</strong> to focus the search bar!
+          </em>
         </p>
       </EuiText>
     ),
-    anchorPosition: 'downCenter' as const,
+    anchorPosition: "downCenter" as const,
   },
   {
     step: 5,
@@ -80,7 +83,7 @@ const tourStepsConfig = [
         </p>
       </EuiText>
     ),
-    anchorPosition: 'rightUp' as const,
+    anchorPosition: "rightUp" as const,
   },
 ];
 
@@ -88,31 +91,27 @@ const tourConfig = {
   currentTourStep: 1,
   isTourActive: true,
   tourPopoverWidth: 300,
-  tourSubtitle: 'Quick Tour',
+  tourSubtitle: "Quick Tour",
 };
 
-// Local storage key
-const TOUR_STORAGE_KEY = 'wazuh_todo_tour_completed';
+const TOUR_STORAGE_KEY = "wazuh_todo_tour_completed";
 
-// Check if tour was completed
 const isTourCompleted = (): boolean => {
   try {
-    return localStorage.getItem(TOUR_STORAGE_KEY) === 'true';
+    return localStorage.getItem(TOUR_STORAGE_KEY) === "true";
   } catch {
     return false;
   }
 };
 
-// Mark tour as completed
 const markTourCompleted = () => {
   try {
-    localStorage.setItem(TOUR_STORAGE_KEY, 'true');
+    localStorage.setItem(TOUR_STORAGE_KEY, "true");
   } catch {
     // Ignore
   }
 };
 
-// Reset tour
 const resetTourStorage = () => {
   try {
     localStorage.removeItem(TOUR_STORAGE_KEY);
@@ -121,10 +120,11 @@ const resetTourStorage = () => {
   }
 };
 
-// Hook to use the tour
 export const useTodoTour = () => {
-  const [shouldShowTour, setShouldShowTour] = React.useState(!isTourCompleted());
-  
+  const [shouldShowTour, setShouldShowTour] = React.useState(
+    !isTourCompleted()
+  );
+
   const [[step1, step2, step3, step4, step5], actions, state] = useEuiTour(
     tourStepsConfig,
     {
@@ -153,7 +153,6 @@ export const useTodoTour = () => {
   };
 };
 
-// Tour Step Wrapper Components
 interface TourStepWrapperProps {
   tourStep: Partial<EuiTourStepProps>;
   children: React.ReactNode;
@@ -180,10 +179,7 @@ export const TourStepWrapper: React.FC<TourStepWrapperProps> = ({
   );
 
   return (
-    <EuiTourStep
-      {...tourStep}
-      footerAction={footerAction}
-    >
+    <EuiTourStep {...tourStep} footerAction={footerAction}>
       {children}
     </EuiTourStep>
   );
