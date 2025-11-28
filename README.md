@@ -102,7 +102,7 @@ A full-featured TODO application plugin for OpenSearch Dashboards, designed for 
 ### Prerequisites
 
 - Docker Desktop or Docker Engine with Compose
-- Node.js (for installing dependencies locally)
+- Node.js 18+ (for installing dependencies locally)
 - Minimum 4GB RAM available for containers
 
 ### 1. Install Dependencies
