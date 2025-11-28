@@ -1,4 +1,4 @@
-# Security Compliance TODO Plugin
+# Security Compliance TODO Plugin (Security TODO Manager)
 
 A full-featured TODO application plugin for OpenSearch Dashboards, designed for security compliance professionals to track tasks related to security standards like PCI DSS, ISO 27001, SOX, and more.
 
