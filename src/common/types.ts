@@ -53,6 +53,7 @@ export interface TodoItem {
   archivedAt?: string;            // ISO 8601 timestamp when archived
   storyPoints?: number;           // Story points for estimation
   coverImage?: string;            // URL or base64 for cover image
+  position?: number;              // Position within status column (for Kanban ordering)
 }
 
 /**
@@ -91,6 +92,7 @@ export interface UpdateTodoRequest {
   archivedAt?: string;
   storyPoints?: number;
   coverImage?: string;
+  position?: number;
 }
 
 /**

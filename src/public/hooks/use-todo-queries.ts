@@ -132,7 +132,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
 
   /**
    * Infinite scroll query for Kanban board
-   * Fetches todos in pages as user scrolls
+   * Fetches todos in pages as user scrolls, ordered by position
    */
   const useInfiniteKanban = (pageSize: number = 50) => {
     return useInfiniteQuery<PaginatedResponse<TodoItem>>(
@@ -142,6 +142,8 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
           archived: false,
           page: pageParam as number,
           size: pageSize,
+          sortField: 'position',
+          sortOrder: 'asc',
         });
         return response;
       },
@@ -154,6 +156,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
           return undefined;
         },
         staleTime: 30000,
+        refetchOnWindowFocus: true,
       }
     );
   };
@@ -196,6 +199,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
         addTodo(newTodo);
         closeModal();
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
     });
@@ -219,11 +223,13 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
         removePendingId(id); // Clear pending state
         closeModal();
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
       onError: (_, { id }) => {
         removePendingId(id); // Clear pending state on error
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
       },
     });
   };
@@ -239,17 +245,20 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       onMutate: async (id) => {
         addPendingId(id);
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
+        await queryClient.cancelQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         removeTodo(id);
       },
       onSuccess: (_, id) => {
         removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
       onError: (_, id) => {
         removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
       },
     });
   };
@@ -265,18 +274,21 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       onMutate: async (id) => {
         addPendingId(id);
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
+        await queryClient.cancelQueries({ queryKey: [...todoKeys.all, 'kanban'] });
       },
       onSuccess: (_, id) => {
         // Remove from store after successful archive
         removeTodo(id);
         removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
       onError: (_, id) => {
         removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
       },
     });
   };
@@ -295,6 +307,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       onSuccess: (_, id) => {
         removePendingId(id);
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
       },
       onError: (_, id) => {
@@ -304,16 +317,16 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
   };
 
   /**
-   * Update todo status (for drag & drop)
+   * Reorder todo (for drag & drop) - updates status and position
    * Uses optimistic update for both store and infinite query cache
    */
-  const useUpdateStatus = () => {
+  const useReorderTodo = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: ({ id, status }: { id: string; status: string }) =>
-        api.updateTodo(id, { status: status as any }),
-      onMutate: async ({ id, status }) => {
+      mutationFn: ({ id, status, position }: { id: string; status: string; position: number }) =>
+        api.reorderTodo(id, status, position),
+      onMutate: async ({ id, status, position }) => {
         addPendingId(id);
         
         // Cancel any outgoing refetches
@@ -321,7 +334,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
         await queryClient.cancelQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         
         // Update the store (for non-kanban views)
-        updateTodoInStore(id, { status: status as any });
+        updateTodoInStore(id, { status: status as any, position });
         
         // Optimistically update the infinite query cache for Kanban
         const kanbanQueryKey = [...todoKeys.all, 'kanban'];
@@ -336,7 +349,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
               pages: oldData.pages.map((page: any) => ({
                 ...page,
                 items: page.items.map((item: TodoItem) =>
-                  item.id === id ? { ...item, status: status as any } : item
+                  item.id === id ? { ...item, status: status as any, position } : item
                 ),
               })),
             };
@@ -368,6 +381,21 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
     });
   };
 
+  /**
+   * Update todo status only (legacy - use useReorderTodo for drag & drop)
+   */
+  const useUpdateStatus = () => {
+    const reorderMutation = useReorderTodo();
+    
+    return {
+      ...reorderMutation,
+      mutate: ({ id, status }: { id: string; status: string }) => 
+        reorderMutation.mutate({ id, status, position: Date.now() }), // Use timestamp as position fallback
+      mutateAsync: ({ id, status }: { id: string; status: string }) => 
+        reorderMutation.mutateAsync({ id, status, position: Date.now() }),
+    };
+  };
+
   // ============================================
   // Bulk Operations
   // ============================================
@@ -383,6 +411,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       onMutate: async (ids) => {
         ids.forEach((id) => addPendingId(id));
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
+        await queryClient.cancelQueries({ queryKey: [...todoKeys.all, 'kanban'] });
       },
       onSuccess: (_, ids) => {
         ids.forEach((id) => {
@@ -390,12 +419,14 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
           removePendingId(id);
         });
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
       onError: (_, ids) => {
         ids.forEach((id) => removePendingId(id));
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
       },
     });
   };
@@ -414,6 +445,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       onSuccess: (_, ids) => {
         ids.forEach((id) => removePendingId(id));
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
@@ -435,18 +467,21 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
       onMutate: async (ids) => {
         ids.forEach((id) => addPendingId(id));
         await queryClient.cancelQueries({ queryKey: todoKeys.lists() });
+        await queryClient.cancelQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         await queryClient.cancelQueries({ queryKey: todoKeys.archived() });
         ids.forEach((id) => removeTodo(id));
       },
       onSuccess: (_, ids) => {
         ids.forEach((id) => removePendingId(id));
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
         queryClient.invalidateQueries({ queryKey: todoKeys.statistics() });
       },
       onError: (_, ids) => {
         ids.forEach((id) => removePendingId(id));
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: [...todoKeys.all, 'kanban'] });
         queryClient.invalidateQueries({ queryKey: todoKeys.archived() });
       },
     });
@@ -467,6 +502,7 @@ export const createTodoHooks = (http: HttpStart, storeActions: StoreActions) => 
     useArchiveTodo,
     useRestoreTodo,
     useUpdateStatus,
+    useReorderTodo,
     // Bulk Operations
     useBulkArchive,
     useBulkRestore,

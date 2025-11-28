@@ -1,22 +1,13 @@
 import { useEffect, useRef, useCallback } from 'react';
 
 interface UseInfiniteScrollOptions {
-  /** Callback when user scrolls near the bottom */
   onLoadMore: () => void;
-  /** Whether there are more items to load */
   hasMore: boolean;
-  /** Whether currently loading */
   isLoading: boolean;
-  /** Distance from bottom to trigger load (in pixels) */
   threshold?: number;
-  /** The scrollable container ref (defaults to window) */
   scrollContainerRef?: React.RefObject<HTMLElement>;
 }
 
-/**
- * Hook for infinite scroll functionality
- * Triggers onLoadMore when user scrolls near the bottom
- */
 export function useInfiniteScroll({
   onLoadMore,
   hasMore,
@@ -63,9 +54,7 @@ export function useInfiniteScroll({
   }, [handleIntersection, threshold, scrollContainerRef]);
 
   return {
-    /** Ref to attach to the sentinel element at the bottom */
     loadMoreRef,
-    /** Whether currently loading more items */
     isLoadingMore: isLoading,
   };
 }

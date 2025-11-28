@@ -16,7 +16,7 @@ interface KanbanBoardProps {
   todosByStatus: Record<TodoStatus, TodoItem[]>;
   statusLabels: Record<TodoStatus, string>;
   onEditTodo: (todo: TodoItem) => void;
-  onStatusChange: (id: string, status: TodoStatus) => void;
+  onReorder: (id: string, status: TodoStatus, position: number) => void;
   onArchiveTodo: (id: string) => void;
   onDeleteTodo: (id: string) => void;
   onCreateInStatus: () => void;
@@ -49,7 +49,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   todosByStatus,
   statusLabels,
   onEditTodo,
-  onStatusChange,
+  onReorder,
   onArchiveTodo,
   onDeleteTodo,
   onCreateInStatus,
@@ -86,6 +86,56 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     return () => observer.disconnect();
   }, [hasMore, isLoadingMore, onLoadMore]);
 
+  /**
+   * Calculate the new position based on adjacent items
+   * Uses decimal positioning like Trello (insert between existing positions)
+   */
+  const calculatePosition = (
+    sourceStatus: TodoStatus,
+    sourceIndex: number,
+    destinationStatus: TodoStatus,
+    destinationIndex: number,
+    draggedItemId: string
+  ): number => {
+    const items = todosByStatus[destinationStatus] || [];
+    
+    // If moving within the same column, we need to filter out the dragged item
+    // to get correct adjacent items
+    const isSameColumn = sourceStatus === destinationStatus;
+    const filteredItems = isSameColumn 
+      ? items.filter((item) => item.id !== draggedItemId)
+      : items;
+    
+    // Adjust destination index for same column moves
+    // If moving down, the index stays the same after filtering
+    // If moving up, it stays the same too because we filtered the item
+    const adjustedIndex = isSameColumn && sourceIndex < destinationIndex
+      ? destinationIndex - 1
+      : destinationIndex;
+    
+    // If dropping at the beginning
+    if (adjustedIndex === 0) {
+      const firstItem = filteredItems[0];
+      const firstPosition = firstItem?.position ?? 1000;
+      return Math.max(1, firstPosition / 2); // Ensure position > 0
+    }
+    
+    // If dropping at the end
+    if (adjustedIndex >= filteredItems.length) {
+      const lastItem = filteredItems[filteredItems.length - 1];
+      const lastPosition = lastItem?.position ?? 0;
+      return lastPosition + 1000;
+    }
+    
+    // If dropping between two items
+    const prevItem = filteredItems[adjustedIndex - 1];
+    const nextItem = filteredItems[adjustedIndex];
+    const prevPosition = prevItem?.position ?? 0;
+    const nextPosition = nextItem?.position ?? prevPosition + 2000;
+    
+    return (prevPosition + nextPosition) / 2;
+  };
+
   const onDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result;
 
@@ -102,14 +152,36 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       return;
     }
 
-    // Get the new status from destination droppableId
+    // Get the new status and calculate position
+    const sourceStatus = source.droppableId as TodoStatus;
     const newStatus = destination.droppableId as TodoStatus;
     const todoId = draggableId;
+    
+    // Debug: Log items in destination column with their positions
+    const destItems = todosByStatus[newStatus] || [];
+    console.log('=== DRAG END ===');
+    console.log('Dragged item ID:', todoId);
+    console.log('Source:', sourceStatus, 'index:', source.index);
+    console.log('Destination:', newStatus, 'index:', destination.index);
+    console.log('Items in destination column:');
+    destItems.forEach((item, idx) => {
+      console.log(`  [${idx}] ${item.title.slice(0, 20)}... - position: ${item.position ?? 'undefined'}`);
+    });
+    
+    // Calculate the new position based on where it was dropped
+    const newPosition = calculatePosition(
+      sourceStatus,
+      source.index,
+      newStatus,
+      destination.index,
+      todoId
+    );
 
-    // Only update if status changed
-    if (source.droppableId !== destination.droppableId) {
-      onStatusChange(todoId, newStatus);
-    }
+    console.log('>>> Calculated new position:', newPosition);
+    console.log('================');
+
+    // Call reorder with the new status and position
+    onReorder(todoId, newStatus, newPosition);
   };
 
   return (

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   EuiModal,
   EuiModalHeader,
@@ -51,6 +51,14 @@ export const TodoModal: React.FC<TodoModalProps> = ({
   const [tags, setTags] = useState<Array<{ label: string }>>([]);
   const [complianceStandards, setComplianceStandards] = useState<Array<{ label: string; value: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
@@ -70,7 +78,10 @@ export const TodoModal: React.FC<TodoModalProps> = ({
 
       await onSave(data);
     } finally {
-      setIsLoading(false);
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 

@@ -2,10 +2,9 @@
  * Seed script to generate test TODOs for performance testing
  * Generates 3999 todos with realistic data distribution
  */
-import { v4 as uuidv4 } from 'uuid';
 import { TodoItem, TodoStatus, TodoPriority, ComplianceStandard } from '../../common/types';
 
-const TOTAL_TODOS = 3999;
+const TOTAL_TODOS = 15;
 
 const statuses = Object.values(TodoStatus);
 const priorities = Object.values(TodoPriority);
@@ -69,17 +68,27 @@ function getRandomDate(daysAgo: number, daysAhead: number): string {
   return new Date(now + offset).toISOString();
 }
 
-/**
- * Generate a batch of test todos
- */
 export function generateTodos(count: number = TOTAL_TODOS): Omit<TodoItem, 'id'>[] {
   const todos: Omit<TodoItem, 'id'>[] = [];
+  
+  // Track position counter per status for proper ordering within columns
+  const positionCounters: Record<TodoStatus, number> = {
+    [TodoStatus.PLANNED]: 0,
+    [TodoStatus.IN_PROGRESS]: 0,
+    [TodoStatus.BLOCKED]: 0,
+    [TodoStatus.COMPLETED_SUCCESS]: 0,
+    [TodoStatus.COMPLETED_ERROR]: 0,
+  };
   
   for (let i = 0; i < count; i++) {
     const createdAt = getRandomDate(90, 0); // Created in last 90 days
     const status = getRandomElement(statuses);
     const isCompleted = status === TodoStatus.COMPLETED_SUCCESS || status === TodoStatus.COMPLETED_ERROR;
     const isArchived = Math.random() < 0.1; // 10% archived
+    
+    // Assign position based on status (1000 increment for easy insertion between items)
+    positionCounters[status] += 1000;
+    const position = positionCounters[status];
     
     todos.push({
       title: `Task #${i + 1}: ${getRandomTitle()}`,
@@ -97,6 +106,7 @@ export function generateTodos(count: number = TOTAL_TODOS): Omit<TodoItem, 'id'>
       completedAt: isCompleted ? getRandomDate(0, 0) : undefined,
       archived: isArchived,
       archivedAt: isArchived ? getRandomDate(0, 0) : undefined,
+      position, // Position within the status column
     });
   }
   

@@ -421,6 +421,57 @@ export function registerTodoRoutes(
     }
   );
 
+  // POST /api/custom_plugin/todos/{id}/reorder - Reorder TODO (move to position in column)
+  router.post(
+    {
+      path: '/api/custom_plugin/todos/{id}/reorder',
+      validate: {
+        params: idParamSchema,
+        body: schema.object({
+          status: schema.string(),
+          position: schema.number(),
+        }),
+      },
+    },
+    async (context, request, response) => {
+      try {
+        const service = createTodoService(context, logger);
+        const { status, position } = request.body;
+        const todo = await service.reorderTodo(
+          request.params.id, 
+          status as TodoStatus, 
+          position
+        );
+        
+        return response.ok({ 
+          body: { 
+            success: true,
+            data: todo,
+            message: 'TODO item reordered successfully'
+          } 
+        });
+      } catch (error: any) {
+        if (error.message.includes('not found')) {
+          return response.notFound({ 
+            body: { 
+              success: false,
+              message: error.message 
+            } 
+          });
+        }
+        logger.error('Error reordering TODO', error);
+        return response.customError({
+          statusCode: 500,
+          body: { 
+            success: false,
+            message: 'Failed to reorder TODO item',
+            error: error.message 
+          },
+        });
+      }
+    }
+  );
+
   // ============================================
   // Bulk Operations
   // ============================================
