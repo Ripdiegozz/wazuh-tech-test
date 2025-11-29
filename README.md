@@ -387,6 +387,12 @@ function TestComponent({ value }: { value: string }) {
 
 **Solution**: Used EUI's drag-and-drop utilities with optimistic updates via React Query's `onMutate` callback, with automatic rollback on error.
 
+### 5. State Management Library Compatibility
+
+**Challenge**: Initially planned to use Zustand for state management due to its simplicity and minimal boilerplate. However, Zustand requires React 18+ features and was incompatible with React 16.14 used in OpenSearch Dashboards.
+
+**Solution**: Implemented state management using React Context API with useReducer. While more verbose than Zustand, this approach works perfectly with React 16.14 and is sufficient for this MVP. The architecture allows for easy migration to Zustand or other libraries when the platform upgrades to React 18+.
+
 ---
 
 ## Future Improvements
@@ -420,6 +426,7 @@ function TestComponent({ value }: { value: string }) {
 - Implement proper error boundaries
 - Add performance monitoring and metrics
 - Create Storybook documentation for components
+- **Migrate to React Router**: Replace conditional view rendering with proper client-side routing for better navigation, URL state management, and browser history support
 
 ---
 
